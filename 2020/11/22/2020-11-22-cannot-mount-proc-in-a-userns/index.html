@@ -1,0 +1,52 @@
+<!DOCTYPE html><html><head><meta name="generator" content="Hexo 3.9.0"><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>如何在user namespace中mount proc | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/linux/">linux</a><a class="post-tag-link" href="/tags/user-namespace/">user namespace</a></div><div class="post-time">2020-11-22</div></div></div><div class="container post-header"><h1>如何在user namespace中mount proc</h1></div><div class="container post-content"><p>最近在用rust实现一个<a href="https://github.com/opencontainers/runtime-spec" target="_blank" rel="noopener">oci runtime</a>。开始就遇到了很多问题，从这里开始理解到底什么是system programming。</p>
+<p>那么什么是system programming？</p>
+<p>参考<a href="http://kamalmarhubi.com/blog/2016/04/13/rust-nix-easier-unix-systems-programming-3/" target="_blank" rel="noopener">Kamal Marhubi</a>的答案：</p>
+<blockquote>
+<p>Systems programming is programming where you spend more time reading man pages than reading the internet.</p>
+</blockquote>
+<p>最近真是读了好多man。。。因为自己想要的东西是google搜不出来的。</p>
+<p>我一开始的想法很简单，创建一个user namespace，设置相应的flags，mount devices和fs，然后把pid放到cgroup v2下面，打完收功。没想到第一个步就走不通。</p>
+<p>这里参考的user namespace的<a href="https://www.man7.org/linux/man-pages/man7/user_namespaces.7.html#EXAMPLES" target="_blank" rel="noopener">example</a>。然后开始用rust改这里的逻辑。</p>
+<p>创建一个新的user namespace流程：</p>
+<ul>
+<li>unshare + all flags</li>
+<li>update uid_map|gid_map</li>
+<li>mount proc</li>
+<li>mount / MS_PRIVATE</li>
+<li>mount rootfs</li>
+<li>mkdir rootfs/oldrootfs</li>
+<li>pivot_root</li>
+<li>chdir /</li>
+<li>umount2 oldrootfs</li>
+<li>rmdir oldrootfs</li>
+</ul>
+<h2 id="遇到的第一个问题是不能修改gid-map"><a href="#遇到的第一个问题是不能修改gid-map" class="headerlink" title="遇到的第一个问题是不能修改gid_map"></a>遇到的第一个问题是不能修改gid_map</h2><p>这个问题很简单：</p>
+<blockquote>
+<p>Linux 3.19 made a change in the handling of setgroups(2) and the<br>‘gid_map’ file to address a security issue. The issue allowed<br><em>unprivileged</em> users to employ user namespaces in order to drop<br>The upshot of the 3.19 changes is that in order to update the<br>‘gid_maps’ file, use of the setgroups() system call in this<br>user namespace must first be disabled by writing “deny” to one of<br>the /proc/PID/setgroups files for this namespace.  That is the<br>purpose of the following function.</p>
+</blockquote>
+<p>在修改gid_map之前setgroups deny就好。</p>
+<h2 id="第二个问题是不能直接mount-proc"><a href="#第二个问题是不能直接mount-proc" class="headerlink" title="第二个问题是不能直接mount proc"></a>第二个问题是不能直接mount proc</h2><p>使用命令行很容易复现：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">unshare -r --pid --mount-proc readlink /proc/self bash </span></span><br><span class="line"><span class="meta">#</span><span class="bash">unshare: mount /proc failed: Operation not permitted</span></span><br></pre></td></tr></table></figure>
+<p>但是使用fork是可以的：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash">unshare -r --fork --pid --mount-proc readlink /proc/self bash</span></span><br><span class="line"><span class="meta">#</span><span class="bash">1</span></span><br></pre></td></tr></table></figure>
+<p>这里可以看到，在创建的namespace中，pid是从1开始的。</p>
+<p>参考man：</p>
+<blockquote>
+<p>  -f, –fork<br>              Fork the specified program as a child process of unshare rather than running it directly.  This is useful when creating a new PID namespace.</p>
+</blockquote>
+<p>最初我在userns_exec_child.c中，尝试在执行execv之前，加了一段mount：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (mount(<span class="string">"proc"</span>, <span class="string">"/proc"</span>, <span class="string">"proc"</span>, MS_REC|MS_BIND, <span class="literal">NULL</span>) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">  <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"ERROR: %s\n"</span>,</span><br><span class="line">      strerror(errno));</span><br><span class="line">  <span class="built_in">exit</span>(EXIT_FAILURE);</span><br></pre></td></tr></table></figure>
+<p>结果是一样的，也是没有权限。在google搜索一番之后，找到了<a href="https://bugzilla.redhat.com/show_bug.cgi?id=1390057" target="_blank" rel="noopener">redhat bugzilla</a>。一看这时间，了不起阿，2016-10-31。</p>
+<p>Karel Zak解释到：</p>
+<blockquote>
+<p>IMHO require CLONE_NEWPID to unshare also the /proc makes sense.<br>And I guess that CLONE_NEWPID requires fork() to create a “init” process in the new pid namespace – without fork() the new /proc will not contain any process.<br>\<br>\<br>$ unshare –user –pid –fork –mount-proc<br>\<br>\<br>seems correct.</p>
+</blockquote>
+<p>user namespace在mount proc这里的实现是依赖fork的，因为在mount proc之前/proc中只包含当前的pid，如何将当前的pid<code>修改</code>成1？显然这是一个immutable的实现，pid是不可以直接修改的。必须依赖fork创建新pid，通过这种方式init。</p>
+<p>另外一个信息：</p>
+<blockquote>
+<p>The –mount-proc has been designed for CLONE_NEWPID</p>
+</blockquote>
+</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+    $(".fancybox").fancybox();
+});
+</script></body></html>
