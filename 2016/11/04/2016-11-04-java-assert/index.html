@@ -1,0 +1,19 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>关于java中的assert | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-time">2016-11-04</div></div></div><div class="container post-header"><h1>关于java中的assert</h1></div><div class="container post-content"><p>自从最近才发现，我一直在用错误的方式使用assert！这一切都源于自己的想当然没有去阅读<a href="https://docs.oracle.com/javase/8/docs/technotes/guides/language/assert.html" target="_blank" rel="noopener">java doc</a>！   </p>
+<p>原来我使用assert的方式就是方法的输入参数校验，这是错误的。特别对于public方法。因为assert校验失败之后抛出AssertError，而不知道到底是什么原因导致了校验失败，所以参数校验还是应该使用IllegalArgumentException。   </p>
+<blockquote>
+<p>Do not use assertions for argument checking in public methods.   </p>
+</blockquote>
+<p>Argument checking is typically part of the published specifications (or contract) of a method, and these specifications must be obeyed whether assertions are enabled or disabled. Another problem with using assertions for argument checking is that erroneous arguments should result in an appropriate runtime exception (such as IllegalArgumentException, IndexOutOfBoundsException, or NullPointerException). An assertion failure will not throw an appropriate exception.   </p>
+<p>另外一个更为重要的是：assert最为一项jvm支持的功能，默认情况是关闭的。只有在java option中指定<strong>-enableassertions</strong>或者是<strong>-es</strong>才可以   </p>
+<p>那么assert应该怎么用呢？   </p>
+<ol>
+<li>不要用做public方法的输入参数检查。</li>
+<li>关于throw什么exception应该自己在程序中控制，而不是依赖assert。</li>
+<li>使用assert验证算法执行中的不变量前置条件和后置条件，而<strong>不是验证数据的正确性</strong>。</li>
+</ol>
+<p>第三条说的太宽泛了，具体的可以参考java docs中更加详细的说明。   </p>
+<p>然而我发现和我一样犯这种错误的人不在少数，很多开源框架中的源码也有很多违背使用assert的地方，特别是在public方法中用assert校验输入参数这条。</p>
+</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+    $(".fancybox").fancybox();
+});
+</script></body></html>

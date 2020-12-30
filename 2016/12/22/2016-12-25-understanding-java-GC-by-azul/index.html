@@ -1,0 +1,24 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>GC是个什么鬼 | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-time">2016-12-22</div></div></div><div class="container post-header"><h1>GC是个什么鬼</h1></div><div class="container post-content"><p>今天看了一个<a href="https://www.youtube.com/watch?v=we_enrM7TSY" target="_blank" rel="noopener">视频</a>。挺有意思。标题是：Understanding Java Garbage Collection and what you can do about it。Speaker是Gil Tene，他是Azul的Vice President of Technology and CTO, Co-Founder。</p>
+<p>这个视频开头就埋了一个大大的伏笔。Gil问大家，各位所在公司开发的系统的服务器内存有多大？1/2 GB？ 1GB？ 2GB？ 4GB？ 10GB？ 20GB？ 50GB？？？细想起来这个问题真的好有意思啊。   </p>
+<p>接下来就是各种扫盲。虽然关于GC也看了不少，但是学的不系统，知识总归没成体系。这个视频还是有一定点拨作用的。最重要的是，这个视频不是一板一眼的跟你讲GC，而是很诚实的说出来了GC没能做到的，或者说是很难做到的。然后你就可以以此来判断这个jvm实现是否够好了：）当然，那都是套路。。。   </p>
+<p>视频说到，GC可能需要分代收集，不同代有不同的收集策略，而GC最终需要解决的就是<strong>STOP-THE-WORLD</strong>。如何尽量减少stop-the-world的频率和时间是JVM需要考虑的首要问题。然而这里面有各种各样的tradeoff。考虑到当年是2010年，当时的Hotspot的G1和CMS，并不是完全的concurrently，而是mostly。所以CMS还是会stop-the-world。   </p>
+<p>这里又引出了另一个问题，理论上，如果可用内存足够大，永远不需要GC。而如果可用内存过小，就越需要GC。一个系统理论上，平均每秒会产生1/4G～1/2G对象，这些对象都是GC需要关心的。如果GC回收内存的速度比应用产生垃圾的速度快，那么应用自然会正常运行。一旦GC回收内存速度没能跟上应用产生垃圾的速度，应用就会慢慢死掉。如果应用所使用的server内存很大，stop-the-world所产生的影响会更加明显。所以就会碰到一个问题——Java application memory wall。就是说java 应用不能完全利用server的硬件资源，具体说就是越来越大的内存。   </p>
+<p>那这个问题看起来好严重啊，内存越来越便宜，但是GC不够屌，只能用那么几G内存，太大了就性能不好。怎么办呢？   </p>
+<ol>
+<li>JVM tuning</li>
+<li>完全不去stop-the-world，垃圾回收都是完全并行处理。</li>
+</ol>
+<p>这个视频最后很有意思，峰回路转有提到了视频开头提到的问题，就是问各位开发的系统的服务器内存有多大？Gil所在的Azul开发的Zing使用的核心GC算法叫C4（Continuously Concurrent Compacting Collector），比当时的hotspot要屌的多。因为zing没有stop-the-world，是完全concurrently。然后对比jvm tuning，又把hotspot狠狠黑了一把。   </p>
+<p>一般来说hotspot的jvm调优看起来是这样的：</p>
+<blockquote>
+<p>•Examples of actual command line GC tuning parameters:<br>•Java -Xmx12g -XX:MaxPermSize=64M -XX:PermSize=32M -XX:MaxNewSize=2g<br>• -XX:NewSize=1g -XX:SurvivorRatio=128 -XX:+UseParNewGC<br>• -XX:+UseConcMarkSweepGC -XX:MaxTenuringThreshold=0<br>• -XX:CMSInitiatingOccupancyFraction=60 -XX:+CMSParallelRemarkEnabled<br>• -XX:+UseCMSInitiatingOccupancyOnly -XX:ParallelGCThreads=12<br>• -XX:LargePageSizeInBytes=256m …<br>•Java –Xms8g –Xmx8g –Xmn2g -XX:PermSize=64M -XX:MaxPermSize=256M<br>•-XX:-OmitStackTraceInFastThrow -XX:SurvivorRatio=2 -XX:-UseAdaptiveSizePolicy<br>•-XX:+UseConcMarkSweepGC -XX:+CMSConcurrentMTEnabled<br>•-XX:+CMSParallelRemarkEnabled -XX:+CMSParallelSurvivorRemarkEnabled<br>•-XX:CMSMaxAbortablePrecleanTime=10000 -XX:+UseCMSInitiatingOccupancyOnly<br>•-XX:CMSInitiatingOccupancyFraction=63 -XX:+UseParNewGC –Xnoclassgc</p>
+</blockquote>
+<p>然而对比Zing GC tuning，只需要这样:</p>
+<blockquote>
+<p>java -Xmx40g</p>
+</blockquote>
+<p>理论上说，java程序员应该不需要理解GC调优，应该关注如何构建应用本身。但是事实上，这一代的程序员恐怕没机会享受这种待遇了。Zing的出发点很好，但是我相信一定付出了代价，不会有这么好的事，特别针对爱踩坑的程序员。总之这是一个可以颠覆认知的好视频，不怎么懂GC，就当好玩看看也行，作为GC入门也不错。但是不能太当真。</p>
+</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+    $(".fancybox").fancybox();
+});
+</script></body></html>

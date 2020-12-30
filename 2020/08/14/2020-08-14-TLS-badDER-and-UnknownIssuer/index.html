@@ -1,0 +1,36 @@
+<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>在rust中处理证书时遇到的问题 | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/let-s-encrypt/" rel="tag">let's encrypt</a><a class="post-tag-link" href="/tags/proxy/" rel="tag">proxy</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a><a class="post-tag-link" href="/tags/tls/" rel="tag">tls</a></div><div class="post-time">2020-08-14</div></div></div><div class="container post-header"><h1>在rust中处理证书时遇到的问题</h1></div><div class="container post-content"><p>基于QUIC的透明代理走到上线环节了。在测试过程中遇到了关于TLS证书的问题，这里记录一下。</p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>在google cloud上有一台instance，因为已经安装了v2ray+caddy，所有tls已经有了。首先要找到server上证书的地址。</p>
+<p>一顿find之后，发现了两个文件server.crt和server.key。我就想当然的把这两个文件当作cert和key传给server端了。</p>
+<p>结果就报错了。</p>
+<h1 id="BadDER"><a href="#BadDER" class="headerlink" title="BadDER"></a>BadDER</h1><p>这个错太简写了。。。我发现是key出的问题。我对证书的各个版本和格式不是很了解，这里面有点复杂，我只是知道个大概。<a href="https://support.ssl.com/Knowledgebase/Article/View/19/0/der-vs-crt-vs-cer-vs-pem-certificates-and-how-to-convert-them" target="_blank" rel="noopener">这篇文章解释的很清楚。</a></p>
+<p>我打开.key文件开到头尾是这样的：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">-----BEGIN EC PRIVATE KEY-----</span><br><span class="line"></span><br><span class="line">----END EC PRIVATE KEY-----</span><br></pre></td></tr></table></figure>
+<h2 id="ec-private-key是个什么鬼？"><a href="#ec-private-key是个什么鬼？" class="headerlink" title="ec private key是个什么鬼？"></a>ec private key是个什么鬼？</h2><p><a href="https://wiki.openssl.org/index.php/Command_Line_Elliptic_Curve_Operations" target="_blank" rel="noopener">解释在这里。</a></p>
+<p>github上找到了相关讨论，源码这里不支持ec key，所以需要把ec转为.pem文件。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl pkcs8 -topk8 -nocrypt -in server.key -out server.key.pem</span><br></pre></td></tr></table></figure>
+<p>重试一下，报了另一个错…</p>
+<h1 id="UnknownIssuer"><a href="#UnknownIssuer" class="headerlink" title="UnknownIssuer"></a>UnknownIssuer</h1><p>通过对比client和server的log，确定这个错是从client的webkpi报出来的。确定是在client接受到server发回来的tls public key之后报的错。这个阶段发生在quic 1-rtt阶段。</p>
+<p>所以server这里是没问题了。</p>
+<p>再看这个错，字面意思就是Unknown Issuer…</p>
+<h2 id="什么是Issuer呢？"><a href="#什么是Issuer呢？" class="headerlink" title="什么是Issuer呢？"></a>什么是Issuer呢？</h2><p>这要说说TLS/SSL的工作原理。简单说，server有一套cert和key，用来向client保证:”咱俩的连接是安全的”。那凭什么有了cert和key，连接就安全了呢？那是因为cert和key是由一个有公信力的组织发给server的。比如，这里的let’s encrypt就是一个有公信力的组织，internet上都信任这个组织。全世界的公共发证机关就那么些，chrome、mozilla、操作系统会把各个安全的机关记录下来。这个叫ca root store。</p>
+<p>这些发证机关叫Authority。可以在chrome打开<strong>chrome://settings/certificates</strong>，就能看到了。</p>
+<p>Issuer就是发证机关。</p>
+<h2 id="Issuer去哪了呢？"><a href="#Issuer去哪了呢？" class="headerlink" title="Issuer去哪了呢？"></a>Issuer去哪了呢？</h2><p>首先，caddy是用的<a href="https://letsencrypt.org/" target="_blank" rel="noopener">Let’s encrypt</a>。难道这个背书在我的fedora32上没有嘛？我第一次搜还真没有。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo dnf install ca-certificates</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">awk -v cmd='openssl x509 -noout -subject' '</span><br><span class="line">    /BEGIN/&#123;close(cmd)&#125;;&#123;print | cmd&#125;' &lt; /etc/ssl/certs/ca-bundle.crt | grep "lets"</span><br></pre></td></tr></table></figure>
+<p>这时候搜，确实能搜到let’s encrypt。但是还是不行。</p>
+<p>这里我想是不是代码里面根本没有去读root store？</p>
+<p>看了半天代码，确定root store是能读到的，自己还写了个demo，用rustls_native_certs::load_native_certs()直接就拿到了。</p>
+<h2 id="真相只有一个。。。"><a href="#真相只有一个。。。" class="headerlink" title="真相只有一个。。。"></a>真相只有一个。。。</h2><p>.crt有问题</p>
+<p>第一次尝试把.crt转为.pem:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openssl x509 -in server.crt -out server.cert.pem -outform PEM</span><br></pre></td></tr></table></figure>
+<p>还是不行。。。</p>
+<p>再看了一遍文档：</p>
+<blockquote>
+<p>.CRT = The CRT extension is used for certificates. The certificates may be encoded as binary DER or <strong>as ASCII PEM</strong>. The CER and CRT extensions are nearly synonymous.  Most common among *nix systems</p>
+</blockquote>
+<p>我看.crt的内容不是二进制的，所以，文件本身就是pem…我直接改后缀为.pem…成功了！</p>
+</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
+    $(".fancybox").fancybox();
+});
+</script></body></html>
