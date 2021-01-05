@@ -1,12 +1,196 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>妈呀，内存又爆了 | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/G1GC/" rel="tag">G1GC</a><a class="post-tag-link" href="/tags/java/" rel="tag">java</a></div><div class="post-time">2017-11-17</div></div></div><div class="container post-header"><h1>妈呀，内存又爆了</h1></div><div class="container post-content"><p>最近写了一个从postgresql到hbase导表job。pg中存的是text，有的条目还是很大的。</p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="最近写了一个从postgresql到hbase导表job。pg中存的是text，有的条目还是很大的。 一开始没怎么注意，就用了200个线程导，发现很快内存就到上限了。回头看代码，也没啥问题，都是GC友好的。于是线程数降到100，内存还是慢慢的爆了。现象就是内存不断上涨，基本不下降，phoenix client在commit的时候会报奇怪的exception，这个时候job基本就不能工作了。挂上GC">
+<meta property="og:type" content="article">
+<meta property="og:title" content="妈呀，内存又爆了">
+<meta property="og:url" content="http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="最近写了一个从postgresql到hbase导表job。pg中存的是text，有的条目还是很大的。 一开始没怎么注意，就用了200个线程导，发现很快内存就到上限了。回头看代码，也没啥问题，都是GC友好的。于是线程数降到100，内存还是慢慢的爆了。现象就是内存不断上涨，基本不下降，phoenix client在commit的时候会报奇怪的exception，这个时候job基本就不能工作了。挂上GC">
+<meta property="article:published_time" content="2017-11-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-11-27T03:18:45.159Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="G1GC">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>妈呀，内存又爆了</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2017/12/15/2017-12-15-spark-OOM-storage-and-executor/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2017/08/06/2017-08-06-carefully-use-thrift-server-in-production/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&text=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&is_video=false&description=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=妈呀，内存又爆了&body=Check out this article: http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&name=妈呀，内存又爆了&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        妈呀，内存又爆了
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2017-11-16T16:00:00.000Z" itemprop="datePublished">2017-11-17</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/G1GC/" rel="tag">G1GC</a>, <a class="tag-link" href="/tags/java/" rel="tag">java</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>最近写了一个从postgresql到hbase导表job。pg中存的是text，有的条目还是很大的。</p>
 <p>一开始没怎么注意，就用了200个线程导，发现很快内存就到上限了。回头看代码，也没啥问题，都是GC友好的。于是线程数降到100，内存还是慢慢的爆了。现象就是内存不断上涨，基本不下降，phoenix client在commit的时候会报奇怪的exception，这个时候job基本就不能工作了。挂上GC log继续跑了一次，发现GC基本无效，但还是有效的，只不过回收的很少。</p>
 <p>回头再看业务，我是根据customer id出发导表的，每个id会有n条记录，每条记录是一个长度为m的数组，需要序列化整个数组，然后打平。我猜问题就出现在这里了，很多customer的记录会有上万条，每条记录的数组长度如果太长的话，这个序列化之后的list会很大。但是这些对象只是大而已，导的速度还是很快的，导完就可以扔掉了。</p>
 <p>于是尝试使用G1GC，虽然没有都没有调大heap空间，但是效果明显改善，GC十分有效。</p>
 <p>默认Parallel collector的log，连续几次的full gc：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">6.783: [Full GC (Metadata GC Threshold) [PSYoungGen: 2880K-&gt;0K(424960K)] [ParOldGen: 8036K-&gt;8024K(52736K)] 10916K-&gt;8024K(477696K), [Metaspace: 20761K-&gt;20761K(1069056K)], 0.1111975 secs] [Times: user=0.11 sys=0.00, real=0.11 secs]</span><br><span class="line">11.710: [GC (Metadata GC Threshold)</span><br><span class="line">Desired survivor size 11010048 bytes, new threshold 1 (max 15)</span><br><span class="line">[PSYoungGen: 413842K-&gt;7153K(424960K)] 421867K-&gt;22659K(477696K), 0.0436894 secs] [Times: user=0.04 sys=0.01, real=0.04 secs]</span><br><span class="line">11.754: [Full GC (Metadata GC Threshold) [PSYoungGen: 7153K-&gt;0K(424960K)] [ParOldGen: 15506K-&gt;19928K(86016K)] 22659K-&gt;19928K(510976K), [Metaspace: 34780K-&gt;34780K(1081344K)], 0.2035734 secs] [Times: user=0.20 sys=0.00, real=0.20 secs]</span><br><span class="line">15.594: [GC (Allocation Failure)</span><br><span class="line">Desired survivor size 26738688 bytes, new threshold 1 (max 15)</span><br><span class="line">[PSYoungGen: 417792K-&gt;10749K(555520K)] 437720K-&gt;67848K(641536K), 0.0464791 secs] [Times: user=0.03 sys=0.02, real=0.05 secs]</span><br><span class="line">19.512: [GC (Allocation Failure)</span><br><span class="line">Desired survivor size 68157440 bytes, new threshold 1 (max 15)</span><br><span class="line">[PSYoungGen: 546821K-&gt;26089K(584192K)] 603919K-&gt;180072K(738304K), 0.3258985 secs] [Times: user=0.28 sys=0.04, real=0.33 secs]</span><br><span class="line">19.838: [Full GC (Ergonomics) [PSYoungGen: 26089K-&gt;8672K(584192K)] [ParOldGen: 153982K-&gt;153842K(287744K)] 180072K-&gt;162515K(871936K), [Metaspace: 44692K-&gt;44684K(1089536K)], 1.2229773 secs] [Times: user=1.22 sys=0.00, real=1.22 secs]</span><br><span class="line">...</span><br><span class="line">360.402: [Full GC (Ergonomics) [PSYoungGen: 6450K-&gt;0K(619008K)] [ParOldGen: 437376K-&gt;292588K(472064K)] 443826K-&gt;292588K(1091072K), [Metaspace: 46611K-&gt;46611K(1091584K)], 1.8845454 secs] [Times: user=1.88 sys=0.00, real=1.89 secs]</span><br></pre></td></tr></table></figure>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">6.783: [Full GC (Metadata GC Threshold) [PSYoungGen: 2880K-&gt;0K(424960K)] [ParOldGen: 8036K-&gt;8024K(52736K)] 10916K-&gt;8024K(477696K), [Metaspace: 20761K-&gt;20761K(1069056K)], 0.1111975 secs] [Times: user&#x3D;0.11 sys&#x3D;0.00, real&#x3D;0.11 secs]</span><br><span class="line">11.710: [GC (Metadata GC Threshold)</span><br><span class="line">Desired survivor size 11010048 bytes, new threshold 1 (max 15)</span><br><span class="line">[PSYoungGen: 413842K-&gt;7153K(424960K)] 421867K-&gt;22659K(477696K), 0.0436894 secs] [Times: user&#x3D;0.04 sys&#x3D;0.01, real&#x3D;0.04 secs]</span><br><span class="line">11.754: [Full GC (Metadata GC Threshold) [PSYoungGen: 7153K-&gt;0K(424960K)] [ParOldGen: 15506K-&gt;19928K(86016K)] 22659K-&gt;19928K(510976K), [Metaspace: 34780K-&gt;34780K(1081344K)], 0.2035734 secs] [Times: user&#x3D;0.20 sys&#x3D;0.00, real&#x3D;0.20 secs]</span><br><span class="line">15.594: [GC (Allocation Failure)</span><br><span class="line">Desired survivor size 26738688 bytes, new threshold 1 (max 15)</span><br><span class="line">[PSYoungGen: 417792K-&gt;10749K(555520K)] 437720K-&gt;67848K(641536K), 0.0464791 secs] [Times: user&#x3D;0.03 sys&#x3D;0.02, real&#x3D;0.05 secs]</span><br><span class="line">19.512: [GC (Allocation Failure)</span><br><span class="line">Desired survivor size 68157440 bytes, new threshold 1 (max 15)</span><br><span class="line">[PSYoungGen: 546821K-&gt;26089K(584192K)] 603919K-&gt;180072K(738304K), 0.3258985 secs] [Times: user&#x3D;0.28 sys&#x3D;0.04, real&#x3D;0.33 secs]</span><br><span class="line">19.838: [Full GC (Ergonomics) [PSYoungGen: 26089K-&gt;8672K(584192K)] [ParOldGen: 153982K-&gt;153842K(287744K)] 180072K-&gt;162515K(871936K), [Metaspace: 44692K-&gt;44684K(1089536K)], 1.2229773 secs] [Times: user&#x3D;1.22 sys&#x3D;0.00, real&#x3D;1.22 secs]</span><br><span class="line">...</span><br><span class="line">360.402: [Full GC (Ergonomics) [PSYoungGen: 6450K-&gt;0K(619008K)] [ParOldGen: 437376K-&gt;292588K(472064K)] 443826K-&gt;292588K(1091072K), [Metaspace: 46611K-&gt;46611K(1091584K)], 1.8845454 secs] [Times: user&#x3D;1.88 sys&#x3D;0.00, real&#x3D;1.89 secs]</span><br></pre></td></tr></table></figure>
 <p>fragment是gc的核心问题。尽管这里能看出，年轻代在grow、老年代在shrink。但是显然速度不够快，早晚会死掉。根据parall gc的文档：</p>
 <blockquote>
-<p>Growing and shrinking the size of a generation is done by increments that are a fixed percentage of the size of the generation so that a generation steps up or down toward its desired size. Growing and shrinking are done at different rates. <strong>By default a generation grows in increments of 20% and shrinks in increments of 5%.</strong> The percentage for growing is controlled by the command-line option -XX:YoungGenerationSizeIncrement=<y> for the young generation and -XX:TenuredGenerationSizeIncrement=<t> for the tenured generation. The percentage by which a generation shrinks is adjusted by the command-line flag -XX:AdaptiveSizeDecrementScaleFactor=<d>. If the growth increment is X percent, then the decrement for shrinking is X/D percent.</d></t></y></p>
+<p>Growing and shrinking the size of a generation is done by increments that are a fixed percentage of the size of the generation so that a generation steps up or down toward its desired size. Growing and shrinking are done at different rates. <strong>By default a generation grows in increments of 20% and shrinks in increments of 5%.</strong> The percentage for growing is controlled by the command-line option -XX:YoungGenerationSizeIncrement=<Y> for the young generation and -XX:TenuredGenerationSizeIncrement=<T> for the tenured generation. The percentage by which a generation shrinks is adjusted by the command-line flag -XX:AdaptiveSizeDecrementScaleFactor=<D>. If the growth increment is X percent, then the decrement for shrinking is X/D percent.</p>
 </blockquote>
 <p>也许改一下这个参数会有奇效？这里没有继续纠结，再看看G1的log。</p>
 <p>首先是第一页log：</p>
@@ -16,7 +200,96 @@
 <p>以及最后的log：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">[Eden: 899.0M(899.0M)-&gt;0.0B(894.0M) Survivors: 5120.0K-&gt;10.0M Heap: 1137.9M(1508.0M)-&gt;243.4M(1508.0M)]</span><br></pre></td></tr></table></figure>
 <p>还是十分平稳的，这里没有用任何g1的参数，理论上调优空间还是很大的。</p>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&text=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&is_video=false&description=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=妈呀，内存又爆了&body=Check out this article: http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&title=妈呀，内存又爆了" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2017/11/17/2017-11-17-memory-will-explode/&name=妈呀，内存又爆了&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

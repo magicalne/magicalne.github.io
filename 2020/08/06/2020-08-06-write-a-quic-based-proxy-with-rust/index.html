@@ -1,4 +1,191 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>使用rust写一个基于QUIC的proxy[0] | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/hyper/" rel="tag">hyper</a><a class="post-tag-link" href="/tags/proxy/" rel="tag">proxy</a><a class="post-tag-link" href="/tags/quinn/" rel="tag">quinn</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a><a class="post-tag-link" href="/tags/tokio/" rel="tag">tokio</a></div><div class="post-time">2020-08-06</div></div></div><div class="container post-header"><h1>使用rust写一个基于QUIC的proxy[0]</h1></div><div class="container post-content"><h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><h2 id="QUIC"><a href="#QUIC" class="headerlink" title="QUIC"></a>QUIC</h2><p>From wikipedia:</p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="简介QUICFrom wikipedia:  QUIC (pronounced “quick”) is a general-purpose[1] transport layer[2] network protocol initially designed by Jim Roskind at Google,[3] implemented, and deployed in 2012,[4] annou">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用rust写一个基于QUIC的proxy[0]">
+<meta property="og:url" content="http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="简介QUICFrom wikipedia:  QUIC (pronounced “quick”) is a general-purpose[1] transport layer[2] network protocol initially designed by Jim Roskind at Google,[3] implemented, and deployed in 2012,[4] annou">
+<meta property="article:published_time" content="2020-08-05T16:00:00.000Z">
+<meta property="article:modified_time" content="2020-08-06T07:47:55.986Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="rust">
+<meta property="article:tag" content="proxy">
+<meta property="article:tag" content="quinn">
+<meta property="article:tag" content="hyper">
+<meta property="article:tag" content="tokio">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>使用rust写一个基于QUIC的proxy[0]</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2020/08/14/2020-08-14-TLS-badDER-and-UnknownIssuer/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2020/04/27/2020-04-27-deserialize_json_in_rust_1/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&text=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&is_video=false&description=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用rust写一个基于QUIC的proxy[0]&body=Check out this article: http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&name=使用rust写一个基于QUIC的proxy[0]&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#简介"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#QUIC"><span class="toc-number">1.1.</span> <span class="toc-text">QUIC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#QUIC实现"><span class="toc-number">1.1.1.</span> <span class="toc-text">QUIC实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代理"><span class="toc-number">1.2.</span> <span class="toc-text">代理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#HTTP-Proxy"><span class="toc-number">2.</span> <span class="toc-text">HTTP Proxy</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-在接到connect之后创建一个tokio-task，并把与client的链接传进去，然后直接return-OK。"><span class="toc-number">2.1.</span> <span class="toc-text">1. 在接到connect之后创建一个tokio task，并把与client的链接传进去，然后直接return OK。</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-使用tokio-io-copy和try-join执行流量代理"><span class="toc-number">2.2.</span> <span class="toc-text">2. 使用tokio::io::copy和try_join执行流量代理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#后记"><span class="toc-number">3.</span> <span class="toc-text">后记</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        使用rust写一个基于QUIC的proxy[0]
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2020-08-05T16:00:00.000Z" itemprop="datePublished">2020-08-06</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/hyper/" rel="tag">hyper</a>, <a class="tag-link" href="/tags/proxy/" rel="tag">proxy</a>, <a class="tag-link" href="/tags/quinn/" rel="tag">quinn</a>, <a class="tag-link" href="/tags/rust/" rel="tag">rust</a>, <a class="tag-link" href="/tags/tokio/" rel="tag">tokio</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><h2 id="QUIC"><a href="#QUIC" class="headerlink" title="QUIC"></a>QUIC</h2><p>From wikipedia:</p>
 <blockquote>
 <p>QUIC (pronounced “quick”) is a general-purpose[1] transport layer[2] network protocol initially designed by Jim Roskind at Google,[3] implemented, and deployed in 2012,[4] announced publicly in 2013 as experimentation broadened,[5][6][7] and described to the IETF.[8] While still an Internet Draft, QUIC is used by more than half of all connections from the Chrome web browser to Google’s servers.[9] Microsoft Edge[10] and Firefox[11] support it, even if not enabled by default, as does Safari Technology Preview.[12]</p>
 </blockquote>
@@ -24,12 +211,12 @@
 </ol>
 <p>如果代理的实现能让请求发送端看不出有代理的<strong>痕迹</strong>，那就是成功的透明代理了。这里会牵扯出一系列的问题，核心问题就是怎么维护连接。作为第一个版本，我就打算写个最简单的，以能跑起来为目的。客户端是一个http proxy + QUIC client，服务端是QUIC server + TcpStream。</p>
 <h1 id="HTTP-Proxy"><a href="#HTTP-Proxy" class="headerlink" title="HTTP Proxy"></a>HTTP Proxy</h1><p>HTTP Proxy有一个特别的method：<strong>connect</strong></p>
-<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CONNECT</span> <span class="string">www.example.com:443</span> HTTP/1.1</span><br></pre></td></tr></table></figure>
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CONNECT</span> <span class="string">www.example.com:443</span> <span class="meta">HTTP/1.1</span></span><br></pre></td></tr></table></figure>
 <p>意味着，client请求代理打开一个proxy tunnel，代理回复OK，client会把真正的请求发送给代理。我在hyper的example里找到了一个<a href="https://github.com/hyperium/hyper/blob/3de81c822e6ac5a5b0640059f53838d0906f68c4/examples/http_proxy.rs" target="_blank" rel="noopener">HTTP Proxy例子</a>。只要把QUIC client的实现加上去，客户端就算写完了。</p>
 <p>这个HTTP Proxy的实现重点有两个</p>
-<h2 id="1-在接到connect之后创建一个tokio-task，并把与client的链接传进去，然后直接return-OK。"><a href="#1-在接到connect之后创建一个tokio-task，并把与client的链接传进去，然后直接return-OK。" class="headerlink" title="1. 在接到connect之后创建一个tokio task，并把与client的链接传进去，然后直接return OK。"></a>1. 在接到connect之后创建一个tokio task，并把与client的链接传进去，然后直接return OK。</h2><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">if</span> <span class="keyword">let</span> <span class="literal">Some</span>(addr) = host_addr(req.uri()) &#123;</span><br><span class="line">    tokio::task::spawn(<span class="keyword">async</span> <span class="keyword">move</span> &#123;</span><br><span class="line">        <span class="keyword">match</span> req.into_body().on_upgrade().<span class="keyword">await</span> &#123;</span><br><span class="line">            <span class="literal">Ok</span>(upgraded) =&gt; &#123;</span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">let</span> <span class="literal">Err</span>(e) = tunnel(upgraded, addr).<span class="keyword">await</span> &#123;</span><br><span class="line">                    eprintln!(<span class="string">"server io error: &#123;&#125;"</span>, e);</span><br><span class="line">                &#125;;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="literal">Err</span>(e) =&gt; eprintln!(<span class="string">"upgrade error: &#123;&#125;"</span>, e),</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="literal">Ok</span>(Response::new(Body::empty()))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="1-在接到connect之后创建一个tokio-task，并把与client的链接传进去，然后直接return-OK。"><a href="#1-在接到connect之后创建一个tokio-task，并把与client的链接传进去，然后直接return-OK。" class="headerlink" title="1. 在接到connect之后创建一个tokio task，并把与client的链接传进去，然后直接return OK。"></a>1. 在接到connect之后创建一个tokio task，并把与client的链接传进去，然后直接return OK。</h2><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> <span class="keyword">if</span> <span class="keyword">let</span> <span class="literal">Some</span>(addr) = host_addr(req.uri()) &#123;</span><br><span class="line">    tokio::task::spawn(<span class="keyword">async</span> <span class="keyword">move</span> &#123;</span><br><span class="line">        <span class="keyword">match</span> req.into_body().on_upgrade().<span class="keyword">await</span> &#123;</span><br><span class="line">            <span class="literal">Ok</span>(upgraded) =&gt; &#123;</span><br><span class="line">                <span class="keyword">if</span> <span class="keyword">let</span> <span class="literal">Err</span>(e) = tunnel(upgraded, addr).<span class="keyword">await</span> &#123;</span><br><span class="line">                    eprintln!(<span class="string">&quot;server io error: &#123;&#125;&quot;</span>, e);</span><br><span class="line">                &#125;;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="literal">Err</span>(e) =&gt; eprintln!(<span class="string">&quot;upgrade error: &#123;&#125;&quot;</span>, e),</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="literal">Ok</span>(Response::new(Body::empty()))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这样连接是不会丢失的。具体的代理逻辑放到了异步task中执行，当前的请求response直接返回给客户。</p>
-<h2 id="2-使用tokio-io-copy和try-join执行流量代理"><a href="#2-使用tokio-io-copy和try-join执行流量代理" class="headerlink" title="2. 使用tokio::io::copy和try_join执行流量代理"></a>2. 使用tokio::io::copy和try_join执行流量代理</h2><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Create a TCP connection to host:port, build a tunnel between the connection and</span></span><br><span class="line"><span class="comment">// the upgraded connection</span></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">fn</span> <span class="title">tunnel</span></span>(upgraded: Upgraded, addr: SocketAddr) -&gt; std::io::<span class="built_in">Result</span>&lt;()&gt; &#123;</span><br><span class="line">    <span class="comment">// Connect to remote server</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> server = TcpStream::connect(addr).<span class="keyword">await</span>?;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Proxying data</span></span><br><span class="line">    <span class="keyword">let</span> amounts = &#123;</span><br><span class="line">        <span class="keyword">let</span> (<span class="keyword">mut</span> server_rd, <span class="keyword">mut</span> server_wr) = server.split();</span><br><span class="line">        <span class="keyword">let</span> (<span class="keyword">mut</span> client_rd, <span class="keyword">mut</span> client_wr) = tokio::io::split(upgraded);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> client_to_server = tokio::io::copy(&amp;<span class="keyword">mut</span> client_rd, &amp;<span class="keyword">mut</span> server_wr);</span><br><span class="line">        <span class="keyword">let</span> server_to_client = tokio::io::copy(&amp;<span class="keyword">mut</span> server_rd, &amp;<span class="keyword">mut</span> client_wr);</span><br><span class="line"></span><br><span class="line">        try_join(client_to_server, server_to_client).<span class="keyword">await</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Print message when done</span></span><br><span class="line">    <span class="keyword">match</span> amounts &#123;</span><br><span class="line">        <span class="literal">Ok</span>((from_client, from_server)) =&gt; &#123;</span><br><span class="line">            <span class="built_in">println!</span>(</span><br><span class="line">                <span class="string">"client wrote &#123;&#125; bytes and received &#123;&#125; bytes"</span>,</span><br><span class="line">                from_client, from_server</span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="literal">Err</span>(e) =&gt; &#123;</span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">"tunnel error: &#123;&#125;"</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="literal">Ok</span>(())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="2-使用tokio-io-copy和try-join执行流量代理"><a href="#2-使用tokio-io-copy和try-join执行流量代理" class="headerlink" title="2. 使用tokio::io::copy和try_join执行流量代理"></a>2. 使用tokio::io::copy和try_join执行流量代理</h2><figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Create a TCP connection to host:port, build a tunnel between the connection and</span></span><br><span class="line"><span class="comment">// the upgraded connection</span></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">fn</span> <span class="title">tunnel</span></span>(upgraded: Upgraded, addr: SocketAddr) -&gt; std::io::<span class="built_in">Result</span>&lt;()&gt; &#123;</span><br><span class="line">    <span class="comment">// Connect to remote server</span></span><br><span class="line">    <span class="keyword">let</span> <span class="keyword">mut</span> server = TcpStream::connect(addr).<span class="keyword">await</span>?;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Proxying data</span></span><br><span class="line">    <span class="keyword">let</span> amounts = &#123;</span><br><span class="line">        <span class="keyword">let</span> (<span class="keyword">mut</span> server_rd, <span class="keyword">mut</span> server_wr) = server.split();</span><br><span class="line">        <span class="keyword">let</span> (<span class="keyword">mut</span> client_rd, <span class="keyword">mut</span> client_wr) = tokio::io::split(upgraded);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">let</span> client_to_server = tokio::io::copy(&amp;<span class="keyword">mut</span> client_rd, &amp;<span class="keyword">mut</span> server_wr);</span><br><span class="line">        <span class="keyword">let</span> server_to_client = tokio::io::copy(&amp;<span class="keyword">mut</span> server_rd, &amp;<span class="keyword">mut</span> client_wr);</span><br><span class="line"></span><br><span class="line">        try_join(client_to_server, server_to_client).<span class="keyword">await</span></span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Print message when done</span></span><br><span class="line">    <span class="keyword">match</span> amounts &#123;</span><br><span class="line">        <span class="literal">Ok</span>((from_client, from_server)) =&gt; &#123;</span><br><span class="line">            <span class="built_in">println!</span>(</span><br><span class="line">                <span class="string">&quot;client wrote &#123;&#125; bytes and received &#123;&#125; bytes&quot;</span>,</span><br><span class="line">                from_client, from_server</span><br><span class="line">            );</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="literal">Err</span>(e) =&gt; &#123;</span><br><span class="line">            <span class="built_in">println!</span>(<span class="string">&quot;tunnel error: &#123;&#125;&quot;</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="literal">Ok</span>(())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>tokio::io::copy在读到异常或读到0个字节会退出，也就是表示这次连接结束了。task return之后，两个连接连同tokio task一同被drop了。</p>
 <p>我一开始以为copy这个方法会无限loop。其实是只读写一次的。所以每次请求都要开一个proxy tunnel。</p>
 <h1 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h1><p>整个代理分别实现了client、server和protocol。没有特别复杂的东西，quinn用起来还挺简单的。唯一遇到的问题就是tokio::async_read_ext::read_buf这个方法与std的read逻辑不一样。tokio是根据传的buffer size来决定读多少。比如一个http的content response是同步的，我应该一次read就读完整个response。但是，如果使用tokio read，传入的buffer: </p>
@@ -40,7 +227,96 @@
 <p>如果我没看漏，hyper从头到尾是没有直接调用read、write方法的。严格说，hyper从头到尾没有调用过async方法。hyper所有的处理逻辑都放在了poll里面。通过调用poll、实现自己的poll和状态机，方便了用户只在调用入口处使用<strong>await</strong>。非常简洁！看完hyper的源码，我算是入门future了。整个代码仓库基本没啥注释，看的我晕晕的。Hyper的作者看起来年纪也不大，rust在http这块的版图基本上都是这哥们贡献的。之前在mozilla，今年5月去了AWS。粉了粉了~</p>
 <h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>史上最简单的基于QUIC的透明代理算是完工了。可以方便的代理http1请求，没试过http2。性能就不谈了，完全发挥不出rust的威力。</p>
 <p>接下来会优化client和server管理连接的实现；以及，增加客户端代理类型：socks5。</p>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#简介"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#QUIC"><span class="toc-number">1.1.</span> <span class="toc-text">QUIC</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#QUIC实现"><span class="toc-number">1.1.1.</span> <span class="toc-text">QUIC实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代理"><span class="toc-number">1.2.</span> <span class="toc-text">代理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#HTTP-Proxy"><span class="toc-number">2.</span> <span class="toc-text">HTTP Proxy</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-在接到connect之后创建一个tokio-task，并把与client的链接传进去，然后直接return-OK。"><span class="toc-number">2.1.</span> <span class="toc-text">1. 在接到connect之后创建一个tokio task，并把与client的链接传进去，然后直接return OK。</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-使用tokio-io-copy和try-join执行流量代理"><span class="toc-number">2.2.</span> <span class="toc-text">2. 使用tokio::io::copy和try_join执行流量代理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#后记"><span class="toc-number">3.</span> <span class="toc-text">后记</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&text=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&is_video=false&description=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用rust写一个基于QUIC的proxy[0]&body=Check out this article: http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&title=使用rust写一个基于QUIC的proxy[0]" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/&name=使用rust写一个基于QUIC的proxy[0]&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

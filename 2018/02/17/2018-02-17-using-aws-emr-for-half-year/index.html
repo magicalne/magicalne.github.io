@@ -1,4 +1,188 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>半年aws emr有感 | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/AWS/" rel="tag">AWS</a><a class="post-tag-link" href="/tags/EMR/" rel="tag">EMR</a></div><div class="post-time">2018-02-17</div></div></div><div class="container post-header"><h1>半年aws emr有感</h1></div><div class="container post-content"><p>2017年6月末加入新公司，开始了一段startup之旅。核心技术自然是aws:)</p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="2017年6月末加入新公司，开始了一段startup之旅。核心技术自然是aws:) 我负责一个线上服务，后面拓展到了3个线上服务+一个hbase集群。多亏aws，我一个人就能hold住，几乎。 EMR因为主要工作内容跟data pipeline有关，所以EMR用的更多些。一开始并不是很理解EMR的设计，踩过几次坑之后，也就明白了。 EMR的核心思想是把存储和计算分离。 传统的技术架构，计算和存储耦">
+<meta property="og:type" content="article">
+<meta property="og:title" content="半年aws emr有感">
+<meta property="og:url" content="http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="2017年6月末加入新公司，开始了一段startup之旅。核心技术自然是aws:) 我负责一个线上服务，后面拓展到了3个线上服务+一个hbase集群。多亏aws，我一个人就能hold住，几乎。 EMR因为主要工作内容跟data pipeline有关，所以EMR用的更多些。一开始并不是很理解EMR的设计，踩过几次坑之后，也就明白了。 EMR的核心思想是把存储和计算分离。 传统的技术架构，计算和存储耦">
+<meta property="article:published_time" content="2018-02-16T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-11-27T02:36:12.200Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="AWS">
+<meta property="article:tag" content="EMR">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>半年aws emr有感</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2018/06/04/2018-06-04-about-hbase/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2018/01/05/2018-01-05-jdbc-underscore-style-to-camel-style/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&text=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&is_video=false&description=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=半年aws emr有感&body=Check out this article: http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&name=半年aws emr有感&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#EMR"><span class="toc-number">1.</span> <span class="toc-text">EMR</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EMR-HBase-on-S3"><span class="toc-number">2.</span> <span class="toc-text">EMR-HBase on S3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Data-pipeline"><span class="toc-number">3.</span> <span class="toc-text">Data pipeline</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        半年aws emr有感
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2018-02-16T16:00:00.000Z" itemprop="datePublished">2018-02-17</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/AWS/" rel="tag">AWS</a>, <a class="tag-link" href="/tags/EMR/" rel="tag">EMR</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>2017年6月末加入新公司，开始了一段startup之旅。核心技术自然是aws:)</p>
 <p>我负责一个线上服务，后面拓展到了3个线上服务+一个hbase集群。多亏aws，我一个人就能hold住，几乎。</p>
 <h3 id="EMR"><a href="#EMR" class="headerlink" title="EMR"></a>EMR</h3><p>因为主要工作内容跟data pipeline有关，所以EMR用的更多些。一开始并不是很理解EMR的设计，踩过几次坑之后，也就明白了。</p>
 <p>EMR的核心思想是把存储和计算分离。</p>
@@ -11,7 +195,96 @@
 <h3 id="Data-pipeline"><a href="#Data-pipeline" class="headerlink" title="Data pipeline"></a>Data pipeline</h3><p>我所有的data pipeline都是围绕hbase的。入口处还有几个postgresql上主站的表。</p>
 <p>不得不吐槽，hbase和phoenix对spark的支持真是差到家了。。。导表还是hive好，可以直接把hbase的表导到s3。postgresql的表是用spark导的。最后用spark sql跑计算，并把结果写回S3。</p>
 <p>spot instance是个好东西，可以省不少钱。</p>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#EMR"><span class="toc-number">1.</span> <span class="toc-text">EMR</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#EMR-HBase-on-S3"><span class="toc-number">2.</span> <span class="toc-text">EMR-HBase on S3</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Data-pipeline"><span class="toc-number">3.</span> <span class="toc-text">Data pipeline</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&text=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&is_video=false&description=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=半年aws emr有感&body=Check out this article: http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&title=半年aws emr有感" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2018/02/17/2018-02-17-using-aws-emr-for-half-year/&name=半年aws emr有感&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

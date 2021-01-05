@@ -1,4 +1,188 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>把kubernetes的log转发到cloudwatch有多难？ | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/cloudwatch/" rel="tag">cloudwatch</a><a class="post-tag-link" href="/tags/kubernetes/" rel="tag">kubernetes</a></div><div class="post-time">2018-09-19</div></div></div><div class="container post-header"><h1>把kubernetes的log转发到cloudwatch有多难？</h1></div><div class="container post-content"><h1 id="kubernetes日志收集"><a href="#kubernetes日志收集" class="headerlink" title="kubernetes日志收集"></a>kubernetes日志收集</h1><h2 id="docer-level"><a href="#docer-level" class="headerlink" title="docer level"></a>docer level</h2><p>最近尝试把kubernetes的log转发到aws的cloudwatch中。原因当然是因为方便查log咯。之前试过用docker的方式导出，还是比较方便的。原理就是在使用kops创建集群的时候，添加两个配置项：</p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="kubernetes日志收集docer level最近尝试把kubernetes的log转发到aws的cloudwatch中。原因当然是因为方便查log咯。之前试过用docker的方式导出，还是比较方便的。原理就是在使用kops创建集群的时候，添加两个配置项：  aws cloudwatch权限 docker配置里，设置使用awslog作为log收集器  这样就可以简单的将kubernetes中所">
+<meta property="og:type" content="article">
+<meta property="og:title" content="把kubernetes的log转发到cloudwatch有多难？">
+<meta property="og:url" content="http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="kubernetes日志收集docer level最近尝试把kubernetes的log转发到aws的cloudwatch中。原因当然是因为方便查log咯。之前试过用docker的方式导出，还是比较方便的。原理就是在使用kops创建集群的时候，添加两个配置项：  aws cloudwatch权限 docker配置里，设置使用awslog作为log收集器  这样就可以简单的将kubernetes中所">
+<meta property="article:published_time" content="2018-09-18T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-11-27T02:36:12.200Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="kubernetes">
+<meta property="article:tag" content="cloudwatch">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>把kubernetes的log转发到cloudwatch有多难？</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2018/10/09/2018-10-09-how-to-make-kubernetes-service-access-external-hbase/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2018/08/30/2018-08-30-k8s-on-aws/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&text=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&is_video=false&description=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=把kubernetes的log转发到cloudwatch有多难？&body=Check out this article: http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&name=把kubernetes的log转发到cloudwatch有多难？&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#kubernetes日志收集"><span class="toc-number">1.</span> <span class="toc-text">kubernetes日志收集</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#docer-level"><span class="toc-number">1.1.</span> <span class="toc-text">docer level</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#fluentd"><span class="toc-number">1.2.</span> <span class="toc-text">fluentd</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Helm"><span class="toc-number">1.2.1.</span> <span class="toc-text">Helm</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#kube2iam"><span class="toc-number">1.2.2.</span> <span class="toc-text">kube2iam</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fluentd-cloudwatch"><span class="toc-number">1.2.3.</span> <span class="toc-text">fluentd-cloudwatch</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Long-day…"><span class="toc-number">2.</span> <span class="toc-text">Long day…</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        把kubernetes的log转发到cloudwatch有多难？
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2018-09-18T16:00:00.000Z" itemprop="datePublished">2018-09-19</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/cloudwatch/" rel="tag">cloudwatch</a>, <a class="tag-link" href="/tags/kubernetes/" rel="tag">kubernetes</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <h1 id="kubernetes日志收集"><a href="#kubernetes日志收集" class="headerlink" title="kubernetes日志收集"></a>kubernetes日志收集</h1><h2 id="docer-level"><a href="#docer-level" class="headerlink" title="docer level"></a>docer level</h2><p>最近尝试把kubernetes的log转发到aws的cloudwatch中。原因当然是因为方便查log咯。之前试过用docker的方式导出，还是比较方便的。原理就是在使用kops创建集群的时候，添加两个配置项：</p>
 <ol>
 <li>aws cloudwatch权限</li>
 <li>docker配置里，设置使用awslog作为log收集器</li>
@@ -11,14 +195,9 @@
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">tiller</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRoleBinding</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">tiller</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">cluster-admin</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">tiller</span></span><br><span class="line">    <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br></pre></td></tr></table></figure>
 <p>注意这里指定了<strong>namespace: kube-system</strong>。这是kubernetes所谓role based access controll(RBAC)的重要一步。少了这一步，后面会有各种各样的麻烦，helm文档居然没有强制要求，最佳实践也是一笔带过。</p>
 <h3 id="kube2iam"><a href="#kube2iam" class="headerlink" title="kube2iam"></a>kube2iam</h3><p>接下来需要装<a href="https://github.com/helm/charts/tree/master/stable/kube2iam" target="_blank" rel="noopener">kube2iam</a>。这里就需要之前安装的tiller了：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm install stable/kube2iam --namespace kube-system --name my-release   --<span class="built_in">set</span>=extraArgs.base-role-arn=arn:aws:iam::xxxxxxxxxx:role/,extraArgs.default-role=kube2iam-default,host.iptables=<span class="literal">true</span>,host.interface=cbr0,rbac.create=<span class="literal">true</span></span><br></pre></td></tr></table></figure></p>
-<p>关于role的解释在<a href="https://gist.github.com/snoby/77a49b6b79d0dd2ad9afbbf533588f54" target="_blank" rel="noopener">这里</a>。对应kops下创建的集群，kops会在aws下创建多个role，对应node的role的名字应该是nodes.xxx.xxx.local。这里的问题是，如果我现在需要对这个role新增policy，就需要每次修改node role。kube2iam就是来解决这个问题的。kube2iam使用了aws iam中assume的功能，这里的assume可以理解为<strong>承担</strong>。你需要创建一个新role，这里就是kube2iam-default，在这个role中修改trust relation：<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"Version"</span>: <span class="string">"2012-10-17"</span>,</span><br><span class="line">  <span class="attr">"Statement"</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"Sid"</span>: <span class="string">""</span>,</span><br><span class="line">      <span class="attr">"Effect"</span>: <span class="string">"Allow"</span>,</span><br><span class="line">      <span class="attr">"Principal"</span>: &#123;</span><br><span class="line">        <span class="attr">"Service"</span>: <span class="string">"ec2.amazonaws.com"</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">"Action"</span>: <span class="string">"sts:AssumeRole"</span></span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"Sid"</span>: <span class="string">""</span>,</span><br><span class="line">      <span class="attr">"Effect"</span>: <span class="string">"Allow"</span>,</span><br><span class="line">      <span class="attr">"Principal"</span>: &#123;</span><br><span class="line">        <span class="attr">"AWS"</span>: <span class="string">"arn:aws:iam::xxxxx:role/nodes.xxxxx.k8s.local"</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">"Action"</span>: <span class="string">"sts:AssumeRole"</span></span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>修改kops的配置。输入命令：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kops edit cluster</span><br></pre></td></tr></table></figure></p>
-<p>然后在spec下新添加配置：<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">additionalPolicies:</span></span><br><span class="line">  <span class="attr">nodes:</span> <span class="string">|</span></span><br><span class="line">    <span class="string">[</span></span><br><span class="line">      <span class="string">&#123;</span></span><br><span class="line">        <span class="attr">"Effect":</span> <span class="string">"Allow"</span><span class="string">,</span></span><br><span class="line">        <span class="attr">"Action":</span> <span class="string">[</span></span><br><span class="line">          <span class="string">"sts:AssumeRole"</span></span><br><span class="line">        <span class="string">],</span></span><br><span class="line">        <span class="attr">"Resource":</span> <span class="string">[</span></span><br><span class="line">          <span class="string">"arn:aws:iam::xxxxxxxxx:role/kube2iam-default"</span></span><br><span class="line">        <span class="string">]</span></span><br><span class="line">      <span class="string">&#125;</span></span><br><span class="line">    <span class="string">]</span></span><br></pre></td></tr></table></figure></p>
-<p>也可以将<strong>kube2iam-default</strong>替换为<strong>kube2iam-* </strong>，意思就是：让所有以kube2iam开头的role承担对应功能，你可以为s3功能/资源添加新的kube2iam-s3，或是为了cloudwatch添加新的kube2iam-cloudwatch，等等。</p>
+<p>关于role的解释在<a href="https://gist.github.com/snoby/77a49b6b79d0dd2ad9afbbf533588f54" target="_blank" rel="noopener">这里</a>。对应kops下创建的集群，kops会在aws下创建多个role，对应node的role的名字应该是nodes.xxx.xxx.local。这里的问题是，如果我现在需要对这个role新增policy，就需要每次修改node role。kube2iam就是来解决这个问题的。kube2iam使用了aws iam中assume的功能，这里的assume可以理解为<strong>承担</strong>。你需要创建一个新role，这里就是kube2iam-default，在这个role中修改trust relation：<br><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;Version&quot;</span>: <span class="string">&quot;2012-10-17&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;Statement&quot;</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">&quot;Sid&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;Effect&quot;</span>: <span class="string">&quot;Allow&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;Principal&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;Service&quot;</span>: <span class="string">&quot;ec2.amazonaws.com&quot;</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">&quot;Action&quot;</span>: <span class="string">&quot;sts:AssumeRole&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">&quot;Sid&quot;</span>: <span class="string">&quot;&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;Effect&quot;</span>: <span class="string">&quot;Allow&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;Principal&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;AWS&quot;</span>: <span class="string">&quot;arn:aws:iam::xxxxx:role/nodes.xxxxx.k8s.local&quot;</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">&quot;Action&quot;</span>: <span class="string">&quot;sts:AssumeRole&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure><br>修改kops的配置。输入命令：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kops edit cluster</span><br></pre></td></tr></table></figure><br>然后在spec下新添加配置：<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">additionalPolicies:</span></span><br><span class="line">  <span class="attr">nodes:</span> <span class="string">|</span></span><br><span class="line">    [</span><br><span class="line">      &#123;</span><br><span class="line">        <span class="attr">&quot;Effect&quot;:</span> <span class="string">&quot;Allow&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;Action&quot;:</span> [</span><br><span class="line">          <span class="string">&quot;sts:AssumeRole&quot;</span></span><br><span class="line">        ],</span><br><span class="line">        <span class="attr">&quot;Resource&quot;:</span> [</span><br><span class="line">          <span class="string">&quot;arn:aws:iam::xxxxxxxxx:role/kube2iam-default&quot;</span></span><br><span class="line">        ]</span><br><span class="line">      &#125;</span><br><span class="line">    ]</span><br></pre></td></tr></table></figure><br>也可以将<strong>kube2iam-default</strong>替换为<strong>kube2iam-* </strong>，意思就是：让所有以kube2iam开头的role承担对应功能，你可以为s3功能/资源添加新的kube2iam-s3，或是为了cloudwatch添加新的kube2iam-cloudwatch，等等。</p>
 <h3 id="fluentd-cloudwatch"><a href="#fluentd-cloudwatch" class="headerlink" title="fluentd-cloudwatch"></a>fluentd-cloudwatch</h3><p>下面就该是安装<a href="https://github.com/helm/charts/tree/master/incubator/fluentd-cloudwatch" target="_blank" rel="noopener">fluentd-cloudwatch</a>。这里心疼自己一秒钟，摸摸头。首先还是RBAC的问题，这里用<strong>rbac.create</strong>是不行的。至今为止，我遇到的，helm上所有的默认配置都是不能直接工作的！</p>
-<p>首先，fluentd-cloudwatch还是incubator项目，所以不能直接在helm上install，需要先add incubator。<br>然后，配置role，需要新创建role和service account。<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRoleBinding</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> <span class="string">["*"]</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">pods</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">namespaces</span></span><br><span class="line">    <span class="attr">verbs:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">get</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">watch</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">list</span></span><br><span class="line"></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br></pre></td></tr></table></figure></p>
-<p>如果这里没配置正确，或者没有让fluentd-cloudwatch拿到这个service account，就会报cannot access resources的异常。所以需要指定<strong>rbac.serviceAccountName=fluentd-service-account</strong>。<br>我之前遇到了一个诡异的问题，就是无法rbac.serviceAccountName赋值，在helm install之后，用这个命令查看：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl --namespace=kube-system get pod fluentd-cloudwatch-xxxxx -o yaml | grep serviceAccount</span><br></pre></td></tr></table></figure></p>
-<p>永远都是default…囧<br>我当时一直用的<strong>helm install -f fluentd-cloudwatch.yaml</strong>的方式安装，但是后来不指定yaml，用命令行传参数后，就可以了-。- 好迷~</p>
+<p>首先，fluentd-cloudwatch还是incubator项目，所以不能直接在helm上install，需要先add incubator。<br>然后，配置role，需要新创建role和service account。<br><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRoleBinding</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">apiGroups:</span> [<span class="string">&quot;*&quot;</span>]</span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">pods</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">namespaces</span></span><br><span class="line">    <span class="attr">verbs:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">get</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">watch</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">list</span></span><br><span class="line"></span><br><span class="line"><span class="meta">---</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ServiceAccount</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">fluentd-service-account</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">kube-system</span></span><br></pre></td></tr></table></figure><br>如果这里没配置正确，或者没有让fluentd-cloudwatch拿到这个service account，就会报cannot access resources的异常。所以需要指定<strong>rbac.serviceAccountName=fluentd-service-account</strong>。<br>我之前遇到了一个诡异的问题，就是无法rbac.serviceAccountName赋值，在helm install之后，用这个命令查看：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl --namespace=kube-system get pod fluentd-cloudwatch-xxxxx -o yaml | grep serviceAccount</span><br></pre></td></tr></table></figure><br>永远都是default…囧<br>我当时一直用的<strong>helm install -f fluentd-cloudwatch.yaml</strong>的方式安装，但是后来不指定yaml，用命令行传参数后，就可以了-。- 好迷~</p>
 <p>但是用命令行还是不行，为什么呢？文档说了：</p>
 <blockquote>
 <p>Starting with fluentd-kubernetes-daemonset v0.12.43-cloudwatch, the container runs as user fluentd. To be able to write pos files to the host system, you’ll need to run fluentd as root. Add the following extraVars value to run as root.</p>
@@ -28,11 +207,98 @@
 <p>“{ name: FLUENT_UID, value: ‘0’ }”</p>
 </blockquote>
 </blockquote>
-<p>我一开始是这样的：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm install --name fluentd-cloudwatch --namespace kube-system --<span class="built_in">set</span> awsRegion=ap-southeast-1,awsRole=kube2iam-default,rbac.serviceAccountName=fluentd-service-account,extraVars[0]=<span class="string">"&#123; name: FLUENT_UID, value: '0' &#125;"</span> incubator/fluentd-cloudwatch</span><br></pre></td></tr></table></figure></p>
-<p>结果不行，报错，说什么yaml不能写json，看了看template的源码，确实写的有问题，难不成又要自己改？google了一下，发现很多人发现这个问题，helm里也有人提pull request了，可是都一个月了都没merge进去…然后我尝试用values.yaml传这个参数，结果成功了。<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm install incubator/fluentd-cloudwatch --name fluentd-cloudwatch --namespace kube-system --<span class="built_in">set</span> awsRegion=ap-southeast-1,awsRole=kube2iam-default,rbac.serviceAccountName=fluentd-service-account -f values.yaml</span><br></pre></td></tr></table></figure></p>
-<p>这里的awsRole就是之前我在kube2iam创建的那个role。</p>
+<p>我一开始是这样的：<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm install --name fluentd-cloudwatch --namespace kube-system --<span class="built_in">set</span> awsRegion=ap-southeast-1,awsRole=kube2iam-default,rbac.serviceAccountName=fluentd-service-account,extraVars[0]=<span class="string">&quot;&#123; name: FLUENT_UID, value: &#x27;0&#x27; &#125;&quot;</span> incubator/fluentd-cloudwatch</span><br></pre></td></tr></table></figure><br>结果不行，报错，说什么yaml不能写json，看了看template的源码，确实写的有问题，难不成又要自己改？google了一下，发现很多人发现这个问题，helm里也有人提pull request了，可是都一个月了都没merge进去…然后我尝试用values.yaml传这个参数，结果成功了。<br><figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">helm install incubator/fluentd-cloudwatch --name fluentd-cloudwatch --namespace kube-system --<span class="built_in">set</span> awsRegion=ap-southeast-1,awsRole=kube2iam-default,rbac.serviceAccountName=fluentd-service-account -f values.yaml</span><br></pre></td></tr></table></figure><br>这里的awsRole就是之前我在kube2iam创建的那个role。</p>
 <h1 id="Long-day…"><a href="#Long-day…" class="headerlink" title="Long day…"></a>Long day…</h1><p>一切就绪，可以在cloudwatch下的kubernetes group下看到流进来的log了，包含了pod、namespace和container id。够用了。<br>现在看看感觉也没啥难的，但是每一个坑都要亲脚踩！回头想想，主要是对kubernetes的RBAC的理解不够深刻。剩下的就是开源软件不够健壮的问题了，见怪不怪。</p>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#kubernetes日志收集"><span class="toc-number">1.</span> <span class="toc-text">kubernetes日志收集</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#docer-level"><span class="toc-number">1.1.</span> <span class="toc-text">docer level</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#fluentd"><span class="toc-number">1.2.</span> <span class="toc-text">fluentd</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Helm"><span class="toc-number">1.2.1.</span> <span class="toc-text">Helm</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#kube2iam"><span class="toc-number">1.2.2.</span> <span class="toc-text">kube2iam</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#fluentd-cloudwatch"><span class="toc-number">1.2.3.</span> <span class="toc-text">fluentd-cloudwatch</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Long-day…"><span class="toc-number">2.</span> <span class="toc-text">Long day…</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&text=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&is_video=false&description=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=把kubernetes的log转发到cloudwatch有多难？&body=Check out this article: http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&title=把kubernetes的log转发到cloudwatch有多难？" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2018/09/19/2018-09-18-how-hard-it-is-to-transfer-log-from-k8s-to-cloudwatch/&name=把kubernetes的log转发到cloudwatch有多难？&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

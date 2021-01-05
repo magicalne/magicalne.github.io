@@ -1,4 +1,181 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot; | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-time">2016-12-10</div></div></div><div class="container post-header"><h1>Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;</h1></div><div class="container post-content"><p>最近在看Doug Lea的那篇基于AQS实现的理论<a href="http://gee.cs.oswego.edu/dl/papers/aqs.pdf" target="_blank" rel="noopener">论文</a>。陆陆续续看了几遍。论文的问题就是作者会把一个或者一类具体问题进行抽象和总结，针对这个或这类问题进行研究，并试图站在一个更高的位置得出结论。这就导致，读这篇论文还是有点难的。主要的难点是细节理论的理解。毕竟这些论文看的少，很多上下文不是很懂，但是若是为了彻底理解这些，把引用的论文都看一遍，有点累。。。   </p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="最近在看Doug Lea的那篇基于AQS实现的理论论文。陆陆续续看了几遍。论文的问题就是作者会把一个或者一类具体问题进行抽象和总结，针对这个或这类问题进行研究，并试图站在一个更高的位置得出结论。这就导致，读这篇论文还是有点难的。主要的难点是细节理论的理解。毕竟这些论文看的少，很多上下文不是很懂，但是若是为了彻底理解这些，把引用的论文都看一遍，有点累。。。    我还是从作者的出发点开始理解吧，试图">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;">
+<meta property="og:url" content="http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="最近在看Doug Lea的那篇基于AQS实现的理论论文。陆陆续续看了几遍。论文的问题就是作者会把一个或者一类具体问题进行抽象和总结，针对这个或这类问题进行研究，并试图站在一个更高的位置得出结论。这就导致，读这篇论文还是有点难的。主要的难点是细节理论的理解。毕竟这些论文看的少，很多上下文不是很懂，但是若是为了彻底理解这些，把引用的论文都看一遍，有点累。。。    我还是从作者的出发点开始理解吧，试图">
+<meta property="article:published_time" content="2016-12-09T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-11-27T02:36:12.196Z">
+<meta property="article:author" content="magicalne">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2016/12/22/2016-12-25-understanding-java-GC-by-azul/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2016/11/18/2016-11-18-what-is-high-tech/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&text=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&is_video=false&description=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;&body=Check out this article: http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&name=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Introduction"><span class="toc-number">1.</span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Design-and-implementation"><span class="toc-number">2.</span> <span class="toc-text">Design and implementation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Synchronization-State"><span class="toc-number">3.</span> <span class="toc-text">Synchronization State</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Blocking"><span class="toc-number">4.</span> <span class="toc-text">Blocking</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Queues"><span class="toc-number">5.</span> <span class="toc-text">Queues</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2016-12-09T16:00:00.000Z" itemprop="datePublished">2016-12-10</time>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>最近在看Doug Lea的那篇基于AQS实现的理论<a href="http://gee.cs.oswego.edu/dl/papers/aqs.pdf" target="_blank" rel="noopener">论文</a>。陆陆续续看了几遍。论文的问题就是作者会把一个或者一类具体问题进行抽象和总结，针对这个或这类问题进行研究，并试图站在一个更高的位置得出结论。这就导致，读这篇论文还是有点难的。主要的难点是细节理论的理解。毕竟这些论文看的少，很多上下文不是很懂，但是若是为了彻底理解这些，把引用的论文都看一遍，有点累。。。   </p>
 <p>我还是从作者的出发点开始理解吧，试图理解整个AQS为什么被设计成这样的。后续会跟着写几篇关于java memory model，reorder，barrier的文章，试图把整个多线程技术，从最顶层java实现到最底层现代cpu、寄存器、内存全部串起来。另类撸串：）   </p>
 <h3 id="Introduction"><a href="#Introduction" class="headerlink" title="Introduction"></a>Introduction</h3><p>首先看看什么是synchronizer——同步器。所谓的synchronizer就是用来维护一组状态的变量，在java1.5发布的AQS中，就是一个32位的int，后面在java1.6发布的时候，又开发了基于long 64位的sycnronizer——AbstractQueuedLongSynchronizer。   </p>
 <blockquote>
@@ -39,14 +216,103 @@
 <h3 id="Queues"><a href="#Queues" class="headerlink" title="Queues"></a>Queues</h3><p>AQS的核心就是这个了，如何维护阻塞的线程——FIFO queues。数据结构选用CLH，具体啥是CLH我就不知道了，那篇论文我没有看。之所以选择CLH是因为，用它实现取消和超时操作更加简单。如果你阅读过很多java多线程相关的材料，或是有一定的多线程开发经验，你自然会知道，处理超时和取消是有多么重要，所以作为基础框架，如何支持处理超时和取消应该AQS首先需要思考的。   </p>
 <p>一个重点是，CLH queue不像大多数的queue，因为它的进队和出队操作是作为lock来使用的。   </p>
 <p>一个新节点，这里称为<strong>node</strong>，进队的原子操作：   </p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">	pred = tail;</span><br><span class="line">&#125; <span class="keyword">while</span> (!tail.compareAndSet(pred, node))</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">do</span> &#123;</span><br><span class="line">    pred = tail;</span><br><span class="line">&#125; <span class="keyword">while</span> (!tail.compareAndSet(pred, node))</span><br></pre></td></tr></table></figure>
 <p>每个节点的释放状态都保存在其前驱节点中。所谓的spinlock中的spin就想这样子：    </p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (pred.status != RELEASED); <span class="comment">//spin</span></span><br></pre></td></tr></table></figure>
-<p>出队操作很简单，只要把<strong>node</strong>指向头就好了。这样<strong>node</strong>就会获取锁<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">head = node;</span><br></pre></td></tr></table></figure></p>
+<p>出队操作很简单，只要把<strong>node</strong>指向头就好了。这样<strong>node</strong>就会获取锁<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">head = node;</span><br><span class="line"></span><br></pre></td></tr></table></figure></p>
 <p>CLH lock的优点包括：进队出队快、lock-free、obstruction free（尽管有竞争，但是总会有一个线程在竞争中胜出。）通过观察head和tail是否相同就知道是否有线程在等待。</p>
 <p>AQS在实现中用尽了原子操作，代码很难看懂。思路就是，如果有多个请求，并发的执行一段代码，原子操作要求只有符合目标预期的一个请求会真正执行原子操作，否则应该重新进入spin中。所以，编写原子操作的代码不能简单的考虑当前的可能性，应该把所有的可能性都考虑进去。</p>
 <p>需要注意的是，一个节点的状态信息（status），其实是保存在它的前驱中的！获取锁和释放锁对应的就是进队和出队。需要注意的是，默认AQS是不公平的。这意味着，并不是head会第一个出队。这是出于效率的考虑。试想，一开始没有资源，但是当一个线程在acquire的时候，突然有资源被释放出来，而这个线程尚未进队列。这时候，这个线程会跳过进队操作，直接acquire。这样比进队列仔出队列效率要高。同样道理，对应notifyAll也是同样道理，不公平的效率更高。</p>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#Introduction"><span class="toc-number">1.</span> <span class="toc-text">Introduction</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Design-and-implementation"><span class="toc-number">2.</span> <span class="toc-text">Design and implementation</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Synchronization-State"><span class="toc-number">3.</span> <span class="toc-text">Synchronization State</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Blocking"><span class="toc-number">4.</span> <span class="toc-text">Blocking</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Queues"><span class="toc-number">5.</span> <span class="toc-text">Queues</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&text=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&is_video=false&description=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;&body=Check out this article: http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&title=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2016/12/10/2016-12-10-AbstractQueuedSynchronizer-framework-part-one/&name=Paper -- &quot;The java.util.concurrent Synchronizer Framework&quot;&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

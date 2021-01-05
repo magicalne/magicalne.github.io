@@ -1,10 +1,276 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>编程思考 | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-time">2016-09-06</div></div></div><div class="container post-header"><h1>编程思考</h1></div><div class="container post-content"><p>想写这篇文章好多天了，一直没得空，今天趁机补上。<br>事出有因，上周的时候，公司里一个前端项目在自动部署之后就挂了。很神奇，这个项目使用webpack-dev-server作为代理服务器，而我那天只是提交了一个代理路径的修改，从那以后这个url就不能正常被代理转发了，就算改回去也不行。但是我本地环境确是好的…首先我思考可能是devops那边做了配置切换，因为之前是出现过这种事的。但经过多次确认之后发现不是devops的问题…最后我把目光放在了package.json上。最终发现了问题。由于devops在使用docker部署的时候，会每次拉一份最新代码，然后copy过去，重新npm install。而package.json中，我是这么写的 <strong>“webpack-dev-server”: “^1.11.0”</strong> 。这里的<strong>^</strong>表示，选取小版本中最新版本。恰巧两周前webpack-dev-server发布了新版本，而其中涉及代理转发的部分没有向前兼容，也就是一个巨大的bug…<br>在知道问题之后，我开始尝试寻找解决办法，github上有人针对这个bug展开了很多探讨，但是并没有合适的workaround。我发现webpack-dev-server中的proxy是实现,依赖于另外一个proxy实现，而且这个proxy在实现过程中又引入了另外一个开源项目…我发现要实现这个代理的功能，我要克服重重障碍，仅仅因为源代码中在开发新版本时，没有考虑向前兼容。值得肯定的是，在原来的版本中，实现代理的功能十分轻松有效。<br>最近看了很多wangyin的文章，基本都刷过一遍。我现在对于编程的理解仿佛又深了一层。我以前一直认为编程是个手艺活，仿佛旧时代的匠人。甭管孬好，有身手艺在手，至少饿不着。我爷爷就是个手艺人、我爸也算半个。所以，一直以来我都把编程当作一项手艺活，认为自己是个匠人，但从来没想过成为艺术家。看了wangyin的文章，我开始相信编程其实是一项艺术。当你真正了解计算机是如何运行、网络如何传输、程序如何编译，你写的代码不再是简简单单的代码，你看到的不是某种语言的语法，而是真相。   </p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="想写这篇文章好多天了，一直没得空，今天趁机补上。事出有因，上周的时候，公司里一个前端项目在自动部署之后就挂了。很神奇，这个项目使用webpack-dev-server作为代理服务器，而我那天只是提交了一个代理路径的修改，从那以后这个url就不能正常被代理转发了，就算改回去也不行。但是我本地环境确是好的…首先我思考可能是devops那边做了配置切换，因为之前是出现过这种事的。但经过多次确认之后发现不">
+<meta property="og:type" content="article">
+<meta property="og:title" content="编程思考">
+<meta property="og:url" content="http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="想写这篇文章好多天了，一直没得空，今天趁机补上。事出有因，上周的时候，公司里一个前端项目在自动部署之后就挂了。很神奇，这个项目使用webpack-dev-server作为代理服务器，而我那天只是提交了一个代理路径的修改，从那以后这个url就不能正常被代理转发了，就算改回去也不行。但是我本地环境确是好的…首先我思考可能是devops那边做了配置切换，因为之前是出现过这种事的。但经过多次确认之后发现不">
+<meta property="article:published_time" content="2016-09-05T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-11-27T02:36:12.193Z">
+<meta property="article:author" content="magicalne">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>编程思考</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2016/09/19/2016-09-19-how-to-integret-new-tech/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2016/08/23/2016-08-23-how-to-write-a-cache/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&text=编程思考" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&is_video=false&description=编程思考" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=编程思考&body=Check out this article: http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&name=编程思考&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#软件是要被使用的"><span class="toc-number">1.</span> <span class="toc-text">软件是要被使用的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码是给人看的"><span class="toc-number">2.</span> <span class="toc-text">代码是给人看的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码不是一蹴而就的"><span class="toc-number">3.</span> <span class="toc-text">代码不是一蹴而就的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试驱动不了开发"><span class="toc-number">4.</span> <span class="toc-text">测试驱动不了开发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#知其然，不如知其所以然"><span class="toc-number">5.</span> <span class="toc-text">知其然，不如知其所以然</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        编程思考
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2016-09-05T16:00:00.000Z" itemprop="datePublished">2016-09-06</time>
+    </div>
+
+
+      
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>想写这篇文章好多天了，一直没得空，今天趁机补上。<br>事出有因，上周的时候，公司里一个前端项目在自动部署之后就挂了。很神奇，这个项目使用webpack-dev-server作为代理服务器，而我那天只是提交了一个代理路径的修改，从那以后这个url就不能正常被代理转发了，就算改回去也不行。但是我本地环境确是好的…首先我思考可能是devops那边做了配置切换，因为之前是出现过这种事的。但经过多次确认之后发现不是devops的问题…最后我把目光放在了package.json上。最终发现了问题。由于devops在使用docker部署的时候，会每次拉一份最新代码，然后copy过去，重新npm install。而package.json中，我是这么写的 <strong>“webpack-dev-server”: “^1.11.0”</strong> 。这里的<strong>^</strong>表示，选取小版本中最新版本。恰巧两周前webpack-dev-server发布了新版本，而其中涉及代理转发的部分没有向前兼容，也就是一个巨大的bug…<br>在知道问题之后，我开始尝试寻找解决办法，github上有人针对这个bug展开了很多探讨，但是并没有合适的workaround。我发现webpack-dev-server中的proxy是实现,依赖于另外一个proxy实现，而且这个proxy在实现过程中又引入了另外一个开源项目…我发现要实现这个代理的功能，我要克服重重障碍，仅仅因为源代码中在开发新版本时，没有考虑向前兼容。值得肯定的是，在原来的版本中，实现代理的功能十分轻松有效。<br>最近看了很多wangyin的文章，基本都刷过一遍。我现在对于编程的理解仿佛又深了一层。我以前一直认为编程是个手艺活，仿佛旧时代的匠人。甭管孬好，有身手艺在手，至少饿不着。我爷爷就是个手艺人、我爸也算半个。所以，一直以来我都把编程当作一项手艺活，认为自己是个匠人，但从来没想过成为艺术家。看了wangyin的文章，我开始相信编程其实是一项艺术。当你真正了解计算机是如何运行、网络如何传输、程序如何编译，你写的代码不再是简简单单的代码，你看到的不是某种语言的语法，而是真相。   </p>
 <h2 id="软件是要被使用的"><a href="#软件是要被使用的" class="headerlink" title="软件是要被使用的"></a>软件是要被使用的</h2><p>拿webpack-dev-server v1.15.0的这次bug说吧，尽管我可以在此基础上自己实现一个版本，但是我需要花费更多的精力，并且要独自维护。我并不是说这个bug有多么严重，我只是从这件事中得到了启发。有些程序员把代码写的极其复杂，难以理解，用到了很多有的没的新奇技术。他完全没有考虑调用者的感受。而且没有<strong>维护代码</strong>的意识，这是极其可怕的。交付可用软件是很重要的，以前我也干过那种不通知调用方直接改数据结构的下流事，实在惭愧…<br>对于新技术的评判和使用有待商榷。我也喜欢用新技术，但是不希望过度工程，把这项新技术强加到这个架构体系上去而不管是否合适，那就是耍流氓。我觉得如果对于新技术的使用存在一个平衡点，那就是<strong>简历驱动开发</strong>vs<strong>系统架构需要</strong>。需求永远走在前面。   </p>
 <h2 id="代码是给人看的"><a href="#代码是给人看的" class="headerlink" title="代码是给人看的"></a>代码是给人看的</h2><p>以前我相信好代码需要注释，烂代码更需要注释。现在我不想信了。代码不像自然语言，代码有自己的表达特点，好的代码是有比自然语言更强的表达能力。所以要写能让人看得懂的代码，而不是依赖注释解释这些代码做了些什么。注释的作用应该放在，这段代码当初为什么要这么写。为将来接手的同事提供一个良好的上下文，而不是挖一个大大的坑。</p>
 <h2 id="代码不是一蹴而就的"><a href="#代码不是一蹴而就的" class="headerlink" title="代码不是一蹴而就的"></a>代码不是一蹴而就的</h2><p>很多程序员都知道这个道理，但是真正意识到这是一个问题的人却很少。我身边的程序员就是这样，他们写完代码测试通过了就大事告吉了，仿佛这段代码已经是完美了，直到下次出现bug之前事不会再看这段代码了。一蹴而就的代码往往经不起推敲，不用说完美，就连能不能正常工作都不敢保证。好的代码一定是自我批判、改造、再批判、再改造的过程。有些程序员会说能程序工作就已经很不容易了。但是我想说，如果仅仅是让程序能够工作，公司招个高职、专科毕业的一样能让它工作，为什么花那么多钱招你来呢？</p>
 <h2 id="测试驱动不了开发"><a href="#测试驱动不了开发" class="headerlink" title="测试驱动不了开发"></a>测试驱动不了开发</h2><p>我以前认为开发完毕时，你只完成了一半的工作量。剩下的一半时间你需要测试程序的准确性。这里有一个自欺欺人的地方，你只能找到能够被检测出来的bug，而不能找到出没被检测出来的bug。我以前一直认为单元测试很重要，诚然，它有它存在的道理。但是对于一个新项目，或者说一个新需求，整个业务需求在不断变化，你不知道这个功能做到最后是什么样子的，但是我每次开发完了必须要自欺欺人的写单元测试。然后过了两天不到，这个接口需要或多或少的修改，你就要跟着把单元测试也跟着改掉。从此以后，你会发现你不仅需要维护这个接口，还要维护这个什么都做不了的单元测试。我开始相信单元测试这种东西是用在那些业务不会频繁变动的代码上。而对于频繁变动的代码，单元测试只会增加你的维护成本。<br>之前看到很多人鼓吹测试驱动开发，他们强调的观点是当你开发一个功能时，先写好单元测试，然后再写代码。或者至少想好怎么进行单元测试，然后再着手写代码，因为不能被单元测试的代码是有问题的，所以需要时刻关注是否能够写出可以被单元测试的代码。但我现在我很好奇他们所在的公司是个啥公司。。。我也想去这样写了代码就不会再更改的公司。   </p>
 <h2 id="知其然，不如知其所以然"><a href="#知其然，不如知其所以然" class="headerlink" title="知其然，不如知其所以然"></a>知其然，不如知其所以然</h2><p>我在日常编程的工作生活中，尽量学习内部实现原理，尽管大多数时候我会忘记。。。但是有一些我却一辈子都不会忘。编程是一件十分有趣的工作，它之所以有趣，我认为是计算机给我带来的种种未知。我到现在不相信，在这世界少有人能精通计算机的方方面面，能把各种底层的实现细节说的一清二楚。如果真有这号人，我觉得他现在一定很无聊：）<br>学习ArrayList和LinkedList的区别可能是过于基础的，ConcurrentHashMap为何能够支持并发又不损耗性能可能也不难，jvm为什么要把内存分堆和栈，函数式编程到底有啥好，什么是cps，什么是coroutine，java中是否可以实现cps和coroutine，在命令行中启动一个spring boot项目的时候都发生了什么…等等这一切，不就是编程最有意思的地方吗。</p>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#软件是要被使用的"><span class="toc-number">1.</span> <span class="toc-text">软件是要被使用的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码是给人看的"><span class="toc-number">2.</span> <span class="toc-text">代码是给人看的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#代码不是一蹴而就的"><span class="toc-number">3.</span> <span class="toc-text">代码不是一蹴而就的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#测试驱动不了开发"><span class="toc-number">4.</span> <span class="toc-text">测试驱动不了开发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#知其然，不如知其所以然"><span class="toc-number">5.</span> <span class="toc-text">知其然，不如知其所以然</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&text=编程思考" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&is_video=false&description=编程思考" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=编程思考&body=Check out this article: http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&title=编程思考" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2016/09/06/2016-09-06-think-about-programming/&name=编程思考&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

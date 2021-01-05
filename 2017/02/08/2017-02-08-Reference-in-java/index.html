@@ -1,4 +1,188 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>Java中的引用类型 | 做正确的事</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- gallery that comes before the header--><article class="wrapper"><div class="post-main"><div class="nav"><nav class="container"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></nav><div class="container post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/java/" rel="tag">java</a><a class="post-tag-link" href="/tags/reference/" rel="tag">reference</a></div><div class="post-time">2017-02-08</div></div></div><div class="container post-header"><h1>Java中的引用类型</h1></div><div class="container post-content"><p>最近在写一个Java实现的cache，就是一个guava cache的轮子。   </p>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="最近在写一个Java实现的cache，就是一个guava cache的轮子。    之前没有刻意研究guava cache，这几天重温guava源码的时候，发现guava cache中继承了SoftReference, WeakReference, PhantomReference，里面还有实现了的queue，这些reference会被enqueue，好奇心因此产生。    看到上述代码的时候才发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java中的引用类型">
+<meta property="og:url" content="http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="最近在写一个Java实现的cache，就是一个guava cache的轮子。    之前没有刻意研究guava cache，这几天重温guava源码的时候，发现guava cache中继承了SoftReference, WeakReference, PhantomReference，里面还有实现了的queue，这些reference会被enqueue，好奇心因此产生。    看到上述代码的时候才发">
+<meta property="article:published_time" content="2017-02-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2019-11-27T02:36:12.198Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="reference">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>Java中的引用类型</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        <li><a class="icon" href="/2017/02/21/2017-02-21-a-performance-optimization-tour/"><i class="fa fa-chevron-left" aria-hidden="true" onmouseover='$("#i-prev").toggle();' onmouseout='$("#i-prev").toggle();'></i></a></li>
+        
+        
+        <li><a class="icon" href="/2017/01/29/2017-01-29-fastfood/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&text=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&is_video=false&description=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Java中的引用类型&body=Check out this article: http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&name=Java中的引用类型&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#对比SoftReference、WeakReference和PhantomReference"><span class="toc-number">1.</span> <span class="toc-text">对比SoftReference、WeakReference和PhantomReference</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#举个例子"><span class="toc-number">2.</span> <span class="toc-text">举个例子</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ReferenceQueue是个什么鬼？"><span class="toc-number">3.</span> <span class="toc-text">ReferenceQueue是个什么鬼？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FinalReference"><span class="toc-number">4.</span> <span class="toc-text">FinalReference</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number"></span> <span class="toc-text">Reference</span></a>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        Java中的引用类型
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2017-02-07T16:00:00.000Z" itemprop="datePublished">2017-02-08</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/java/" rel="tag">java</a>, <a class="tag-link" href="/tags/reference/" rel="tag">reference</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>最近在写一个Java实现的cache，就是一个guava cache的轮子。   </p>
 <p>之前没有刻意研究guava cache，这几天重温guava源码的时候，发现guava cache中继承了SoftReference, WeakReference, PhantomReference，里面还有实现了的queue，这些reference会被enqueue，好奇心因此产生。   </p>
 <p>看到上述代码的时候才发现自己不知道如何在java中使用这些reference，于是研究了一番。大家经常在面试、笔试中碰到的reference的问题大都是问：“Java中有几种reference？分别是什么？”但是很少问它们究竟都是用来干什么的？如何使用？   </p>
 <p><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/ref/package-summary.html" target="_blank" rel="noopener">java.lang.ref</a>上有详细的解释，但是不是很通俗。由于我是想自己写一个cache，而SoftReference非常适合开发cache程序，我就特别关注这个问题。总的来说，这些reference都是跟垃圾回收器相关，会针对不同的reference类型，产生不同的回收策略。   </p>
@@ -13,9 +197,9 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ReferenceQueue&lt;Foo&gt; fooQueue = <span class="keyword">new</span> ReferenceQueue&lt;&gt;();</span><br><span class="line">Foo foo = <span class="keyword">new</span> Foo();</span><br><span class="line">Reference&lt;Foo&gt; reference = <span class="keyword">new</span> PhantomReference&lt;&gt;(foo, fooQueue);</span><br><span class="line">foo = <span class="keyword">null</span>;</span><br><span class="line">System.out.println(reference.get() == <span class="keyword">null</span>); <span class="comment">//true</span></span><br></pre></td></tr></table></figure>
 <p>PhantomReference作为最弱的引用对象，当一个对象只被一个PhantomReference引用时，不管是否发生GC，这个对象都会被回收。   </p>
 <p>有趣的是，以上对于PhantomReference的解释是一个错觉。因为PhantomReference.get()永远返回<strong>null</strong>。JDK文档解释如下：   </p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Returns this reference object's referent.  Because the referent of a</span></span><br><span class="line"><span class="comment"> * phantom reference is always inaccessible, this method always returns</span></span><br><span class="line"><span class="comment"> * &lt;code&gt;null&lt;/code&gt;.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span>  &lt;code&gt;null&lt;/code&gt;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Returns this reference object&#x27;s referent.  Because the referent of a</span></span><br><span class="line"><span class="comment"> * phantom reference is always inaccessible, this method always returns</span></span><br><span class="line"><span class="comment"> * &lt;code&gt;null&lt;/code&gt;.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@return</span>  &lt;code&gt;null&lt;/code&gt;</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>phantom reference意味着所引用的对象已经不存在了，就等着被GC了，一旦被JVM回收，JVM会主动调用enqueue()，将phantom reference加到ReferenceQueue中。phantom reference存在的目的是为了配合finalization。我们可以在java中重写Object的finalize()方法，但是finalize方法不应该随便使用，通常我们不需要finalize方法。phantom reference的存在补充了finalize的功能。phantom reference可以用来处理对象<strong>死前</strong>的cleanup操作。   </p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Foo foo = <span class="keyword">new</span> Foo(<span class="number">1</span>);</span><br><span class="line">Reference&lt;Foo&gt; reference = <span class="keyword">new</span> PhantomReference&lt;&gt;(foo, fooQueue);</span><br><span class="line">foo = <span class="keyword">null</span>;</span><br><span class="line"><span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">	System.out.println(reference.isEnqueued());</span><br><span class="line">	<span class="keyword">if</span> (reference.isEnqueued()) &#123;</span><br><span class="line">    	<span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Foo foo = <span class="keyword">new</span> Foo(<span class="number">1</span>);</span><br><span class="line">Reference&lt;Foo&gt; reference = <span class="keyword">new</span> PhantomReference&lt;&gt;(foo, fooQueue);</span><br><span class="line">foo = <span class="keyword">null</span>;</span><br><span class="line"><span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">    System.out.println(reference.isEnqueued());</span><br><span class="line">    <span class="keyword">if</span> (reference.isEnqueued()) &#123;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>当foo只被phantom reference引用时，foo已经死了，当GC触发回收foo对象时，JVM会将foo的phantom reference加到fooQueue中。即，当发现phantom reference在queue中时，就意味着foo对象已经不在内存中了。   </p>
 <h3 id="举个例子"><a href="#举个例子" class="headerlink" title="举个例子"></a>举个例子</h3><p>当需要load一张大图片到内存中，我们希望当一张图片被GC完全回收后再load下一张，这时候就可以利用phantom reference来实现了。   </p>
 <blockquote>
@@ -33,7 +217,96 @@
 <li><a href="https://dzone.com/articles/finalization-and-phantom" target="_blank" rel="noopener">Finalization and Phantom References</a></li>
 <li><a href="http://lovestblog.cn/blog/2015/07/09/final-reference/" target="_blank" rel="noopener">JVM源码分析之FinalReference完全解读</a></li>
 </ol>
-</div></div><div class="post-main post-comment"></div></article><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#对比SoftReference、WeakReference和PhantomReference"><span class="toc-number">1.</span> <span class="toc-text">对比SoftReference、WeakReference和PhantomReference</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#举个例子"><span class="toc-number">2.</span> <span class="toc-text">举个例子</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ReferenceQueue是个什么鬼？"><span class="toc-number">3.</span> <span class="toc-text">ReferenceQueue是个什么鬼？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#FinalReference"><span class="toc-number">4.</span> <span class="toc-text">FinalReference</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Reference"><span class="toc-number"></span> <span class="toc-text">Reference</span></a>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&text=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&is_video=false&description=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=Java中的引用类型&body=Check out this article: http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&title=Java中的引用类型" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2017/02/08/2017-02-08-Reference-in-java/&name=Java中的引用类型&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>

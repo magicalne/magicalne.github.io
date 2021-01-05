@@ -1,4 +1,267 @@
-<!DOCTYPE html><html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"><meta content="yes" name="apple-mobile-web-app-capable"><meta content="black-translucent" name="apple-mobile-web-app-status-bar-style"><meta content="telephone=no" name="format-detection"><meta name="description" content="瞎bb的私密小天地，羞"><title>做正确的事 | It was at this moment. He knew. He's fucked up.</title><link rel="stylesheet" type="text/css" href="/css/normalize.css"><link rel="stylesheet" type="text/css" href="/css/highlight.css"><link rel="stylesheet" type="text/css" href="/css/noise.css"><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/font-awesome/4.5.0/css/font-awesome.min.css"><link rel="Shortcut Icon" type="image/x-icon" href="/favicon.ico"><link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Lato"><meta name="generator" content="Hexo 4.2.1"></head><body><!-- Blog title and subtitle--><header class="wrapper header"><div class="container blog-title"><a id="logo" href="/." class="title">做正确的事</a><span class="subtitle">It was at this moment. He knew. He's fucked up.</span><label id="toggle-menu" for="menu" onclick><i class="fa fa-bars"></i></label></div><!-- use checkbox hack for toggle nav-bar on small screens--><input id="menu" type="checkbox"><div class="container nav-items"><a href="/" class="sidebar-nav-item active">Home</a><a href="/archives" class="sidebar-nav-item">Archives</a><a href="/about" class="sidebar-nav-item">About</a></div></header><article class="wrapper"><div id="index-main" class="container entries"><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/12/27/2020-12-27-tty-in-container/">tty、pty、ptmx、pts与container</a></div><div class="post-content"><p>当我在实现linux container的时候，遇到的最大的问题（至今为止），就是如何让host与container通过命令行通信。所以深入学习了linux的tty。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/ptmx/" rel="tag">ptmx</a></div><div class="post-time">2020-12-27</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/12/08/2020-12-08-problems-about-upgrade-to-fedora-33/">升级到fedora 33的问题列表</a></div><div class="post-content"><p>升级到fedora 33，没有被btrfs摧残，yet。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/fedora/" rel="tag">fedora</a></div><div class="post-time">2020-12-08</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/11/22/2020-11-22-cannot-mount-proc-in-a-userns/">如何在user namespace中mount proc</a></div><div class="post-content"><p>最近在用rust实现一个<a href="https://github.com/opencontainers/runtime-spec" target="_blank" rel="noopener">oci runtime</a>。开始就遇到了很多问题，从这里开始理解到底什么是system programming。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/linux/" rel="tag">linux</a><a class="post-tag-link" href="/tags/user-namespace/" rel="tag">user namespace</a></div><div class="post-time">2020-11-22</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/11/05/2020-11-05-first-look-into-golang/">初探golang</a></div><div class="post-content"><p>go作为一门现代语言，没有历史包袱，语法简单。就是由于起初设计语言的时候，把go设计的太简单，导致很多决策都是后面版本迭代出来的。go特别像是简易c语言+runtime。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/go/" rel="tag">go</a></div><div class="post-time">2020-11-05</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/09/08/2020-09-08-dive-into-cgroup-v2/">cgroup V2</a></div><div class="post-content"><p>虽然docker一直有用，但是cgroup、namespace只停留在字面上见过的级别。最近上手rust，想用rust写一个oci的实现，发现rust下有一些cgroup的crate。进而发现cgroup v2已经release有一段时间了，crun、runc等等都已经支持上了。但是rust中没有cgroup v2对应的实现。所以，写一个？</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/cgroup/" rel="tag">cgroup</a><a class="post-tag-link" href="/tags/linux/" rel="tag">linux</a><a class="post-tag-link" href="/tags/systemd/" rel="tag">systemd</a></div><div class="post-time">2020-09-08</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/08/19/2020-08-19-quic-based-proxy-optimization/">基于QUIC的透明代理客户端优化</a></div><div class="post-content"><p>在基本功能完善之后，发现代理速度如龟。这跟理论不贴合阿，先从client入手。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/proxy/" rel="tag">proxy</a><a class="post-tag-link" href="/tags/quinn/" rel="tag">quinn</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a></div><div class="post-time">2020-08-19</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/08/14/2020-08-14-TLS-badDER-and-UnknownIssuer/">在rust中处理证书时遇到的问题</a></div><div class="post-content"><p>基于QUIC的透明代理走到上线环节了。在测试过程中遇到了关于TLS证书的问题，这里记录一下。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/let-s-encrypt/" rel="tag">let's encrypt</a><a class="post-tag-link" href="/tags/proxy/" rel="tag">proxy</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a><a class="post-tag-link" href="/tags/tls/" rel="tag">tls</a></div><div class="post-time">2020-08-14</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/08/06/2020-08-06-write-a-quic-based-proxy-with-rust/">使用rust写一个基于QUIC的proxy[0]</a></div><div class="post-content"><h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><h2 id="QUIC"><a href="#QUIC" class="headerlink" title="QUIC"></a>QUIC</h2><p>From wikipedia:</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/hyper/" rel="tag">hyper</a><a class="post-tag-link" href="/tags/proxy/" rel="tag">proxy</a><a class="post-tag-link" href="/tags/quinn/" rel="tag">quinn</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a><a class="post-tag-link" href="/tags/tokio/" rel="tag">tokio</a></div><div class="post-time">2020-08-06</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/04/27/2020-04-27-deserialize_json_in_rust_1/">rust反序列化提升性能</a></div><div class="post-content"><p>一个多月前入了rust的坑。当时想学学rust就是想尽可能的提升性能，但是又“不敢”写生产环境级别的C++。退而求其次，学学rust吧。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/deserialize/" rel="tag">deserialize</a><a class="post-tag-link" href="/tags/nom/" rel="tag">nom</a><a class="post-tag-link" href="/tags/rust/" rel="tag">rust</a><a class="post-tag-link" href="/tags/serde-json/" rel="tag">serde_json</a></div><div class="post-time">2020-04-27</div></div></div></div><div class="post-entry"><div class="post-desc"><div class="post-title"><a href="/2020/01/15/2020-01-15-how-to-remove-kernel-in-fedora/">如何为Fedora删除kernel</a></div><div class="post-content"><p>Linux各个发行版的升级一直以来都是一件头疼的事情。当年第一次用ubuntu的时候，一周重装了3次…真的是遇到问题只会重装。</p></div><div class="post-meta"><div class="post-tags"><a class="post-tag-link" href="/tags/fedora/" rel="tag">fedora</a><a class="post-tag-link" href="/tags/linux/" rel="tag">linux</a></div><div class="post-time">2020-01-15</div></div></div></div></div></article><div class="wrapper page-navigator-wrapper"><div class="page-navigator"><span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a></div></div><footer class="footer wrapper"><div class="social"><a href="mailto:magicalne@gmail.com" target="_blank"><i class="fa fa-envelope-o"></i></a><a href="http://twitter.com/magicalne" target="_blank"><i class="fa fa-twitter"></i></a><a href="https://github.com/magicalne" target="_blank"><i class="fa fa-github"></i></a><a href="https://plus.google.com/magicalne" target="_blank"><i class="fa fa-google-plus"></i></a></div><div class="footer-content">© 2020 <a href="/" rel="nofollow">做正确的事</a>. Powered by <a rel="nofollow" target="_blank" href="https://hexo.io">Hexo</a>. Theme <a target="_blank" href="https://github.com/lotabout/hexo-theme-noise">noise</a>.</div></footer><link rel="stylesheet" type="text/css" href="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.css"><script src="//cdn.bootcss.com/jquery/2.0.3/jquery.min.js"></script><script src="//cdn.bootcss.com/fancybox/2.1.5/jquery.fancybox.pack.js"></script><script>$(document).ready(function() {
-    $(".fancybox").fancybox();
-});
-</script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="瞎bb的私密小天地，羞">
+<meta property="og:type" content="website">
+<meta property="og:title" content="magicalne">
+<meta property="og:url" content="http://github.magicalne.io/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="瞎bb的私密小天地，羞">
+<meta property="article:author" content="magicalne">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>magicalne</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+      <div class="content index width mx-auto px2 my4">
+          
+            <header id="header">
+  <a href="/">
+  
+    
+      <div id="logo" style="background-image: url(/images/logo.png);"></div>
+    
+  
+    <div id="title">
+      <h1>magicalne</h1>
+“Perfer et obdura, dolor hic tibi proderit olim. (Be patient and tough; someday this pain will be useful to you.)” ― Ovid
+    </div>
+  </a>
+  <div id="nav">
+    <ul>
+      <li class="icon">
+        <a href="#"><i class="fa fa-bars fa-2x"></i></a>
+      </li>
+       
+        <li><a href="/">Home</a></li>
+       
+        <li><a href="/about/">About</a></li>
+       
+        <li><a href="/archives/">Writing</a></li>
+       
+        <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+      
+    </ul>
+  </div>
+</header>
+
+          
+          <section id="about">
+  
+    <p>瞎bb的私密小天地，羞</p>
+
+  
+  <p style="display: inline">
+    
+      Find me on
+      <ul id="sociallinks">
+        
+          <li><a class="icon" target="_blank" href="https://github.com/magicalne" title="github"><i class="fa fa-github"></i></a></li>
+        
+          <li><a class="icon" target="_blank" href="https://twitter.com/magicalne" title="twitter"><i class="fa fa-twitter"></i></a></li>
+        
+      </ul>.
+    
+  </p>
+</section>
+
+<section id="writing">
+  <span class="h1"><a href="/archives">Writing</a></span>
+  <ul class="post-list">
+    
+      <li class="post-item">
+        
+    <div class="meta">
+        <time datetime="2020-12-26T16:00:00.000Z" itemprop="datePublished">2020-12-27</time>
+    </div>
+
+
+        <span>
+    
+        <a class="" href="/2020/12/27/2020-12-27-tty-in-container/">tty、pty、ptmx、pts与container</a>
+    
+
+
+</span>
+      </li>
+    
+      <li class="post-item">
+        
+    <div class="meta">
+        <time datetime="2020-12-07T16:00:00.000Z" itemprop="datePublished">2020-12-08</time>
+    </div>
+
+
+        <span>
+    
+        <a class="" href="/2020/12/08/2020-12-08-problems-about-upgrade-to-fedora-33/">升级到fedora 33的问题列表</a>
+    
+
+
+</span>
+      </li>
+    
+      <li class="post-item">
+        
+    <div class="meta">
+        <time datetime="2020-11-21T16:00:00.000Z" itemprop="datePublished">2020-11-22</time>
+    </div>
+
+
+        <span>
+    
+        <a class="" href="/2020/11/22/2020-11-22-cannot-mount-proc-in-a-userns/">如何在user namespace中mount proc</a>
+    
+
+
+</span>
+      </li>
+    
+      <li class="post-item">
+        
+    <div class="meta">
+        <time datetime="2020-11-04T16:00:00.000Z" itemprop="datePublished">2020-11-05</time>
+    </div>
+
+
+        <span>
+    
+        <a class="" href="/2020/11/05/2020-11-05-first-look-into-golang/">初探golang</a>
+    
+
+
+</span>
+      </li>
+    
+      <li class="post-item">
+        
+    <div class="meta">
+        <time datetime="2020-09-07T16:00:00.000Z" itemprop="datePublished">2020-09-08</time>
+    </div>
+
+
+        <span>
+    
+        <a class="" href="/2020/09/08/2020-09-08-dive-into-cgroup-v2/">cgroup V2</a>
+    
+
+
+</span>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+      </div>
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>
