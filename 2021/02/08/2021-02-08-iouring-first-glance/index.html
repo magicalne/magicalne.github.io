@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="linux以性能著称，但是在一些小于1%的场景下，linux在io的表现上并不能让人满意。 主要原因在于上下文切换。 无论是网络请求还是本地磁盘io、read&#x2F;write、pread&#x2F;pwrite、epoll、aio都绕不开频繁的上下文切换。这是linux的by design。 io执行一次read操作，一定需要从user space转换到kernel space。为了给网络io增大吞吐量，通常会">
+<meta property="og:type" content="article">
+<meta property="og:title" content="初探io_uring">
+<meta property="og:url" content="http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="linux以性能著称，但是在一些小于1%的场景下，linux在io的表现上并不能让人满意。 主要原因在于上下文切换。 无论是网络请求还是本地磁盘io、read&#x2F;write、pread&#x2F;pwrite、epoll、aio都绕不开频繁的上下文切换。这是linux的by design。 io执行一次read操作，一定需要从user space转换到kernel space。为了给网络io增大吞吐量，通常会">
+<meta property="article:published_time" content="2021-02-07T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-08T04:21:06.677Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="io_uring">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>初探io_uring</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="/2020/12/27/2020-12-27-tty-in-container/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&text=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&is_video=false&description=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=初探io_uring&body=Check out this article: http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&name=初探io_uring&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        初探io_uring
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2021-02-07T16:00:00.000Z" itemprop="datePublished">2021-02-08</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/io-uring/" rel="tag">io_uring</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p>linux以性能著称，但是在一些小于1%的场景下，linux在io的表现上并不能让人满意。</p>
+<p>主要原因在于上下文切换。</p>
+<p>无论是网络请求还是本地磁盘io、read/write、pread/pwrite、epoll、aio都绕不开频繁的上下文切换。这是linux的<code>by design</code>。</p>
+<p>io执行一次read操作，一定需要从user space转换到kernel space。为了给网络io增大吞吐量，通常会使用增加线程数量来处理大规模的并发请求。</p>
+<p>但是一些要求低延时的场景，过去linux提供的这些io操作不能满足需求。业界解决方案就是<a href="https://www.dpdk.org/" target="_blank" rel="noopener">DPDK</a>。</p>
+<p>网络操作因为linux的设计导致不能满足需求，那就绕过去。自己实现tcp、udp协议栈，使用专业网卡，甚至fpga直接烧。</p>
+<p>对于这个问题，linux也给出了自己的解决方案：<code>io_uring</code></p>
+<p>io_uring从用户角度看，设计是异常简单明了的。io_uring将一次io操作进行拆分，拆分成提交请求和接受回复。</p>
+<p>二者均使用了<code>ring buffer</code>的数据结构，以及<code>生产者-消费者</code>模式。</p>
+<p>注意这里有两个ring buffer，提交和完成两个阶段使用不同的ring buffer。</p>
+<p>提交请求就是，生产者（客户）向ring buffer发送一个消息，消费者（kernel）从ring buffer读取一个消息。<br>当kernel处理完之后，生产者（kernel）向完成队列提交一个消息，消费者（客户）从ring buffer读取一个消息。</p>
+<p>这里性能提升的来源在于，由于ring buffer是一个共享的数据结构，user space和kernel space不需要不断的切换。</p>
+<p>io_uring还提供了其他高级功能，比如异步通知。</p>
+<p>因为linux的读写操作都是阻塞的。之前写了一个container，里面起了一个linux shell，我希望在host上执行container linux的shell操作。</p>
+<p>我希望知道，ptmx是否有新内容可以读，以及是否我想提交命令到container linux。</p>
+<p>这种功能epoll可以很好的完成，但是不高级，是时候祭出io_uring了。</p>
+<p><a href="https://github.com/magicalne/libcontainer-rs/blob/172f53e60a6a110ab666d5d0474fe75cadf9e7f8/src/linux.rs#L632" target="_blank" rel="noopener">code</a></p>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&text=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&is_video=false&description=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=初探io_uring&body=Check out this article: http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&title=初探io_uring" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2021/02/08/2021-02-08-iouring-first-glance/&name=初探io_uring&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>
