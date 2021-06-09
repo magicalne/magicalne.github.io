@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- so meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="HandheldFriendly" content="True">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <meta name="description" content="magicalane最新版本v0.1.0已经支持socksv5，实测下来效果还不错呢。 当第一次开始测试时，发现不能打满带宽，这让我对quic产生了怀疑。腾讯云lighthouse带宽是30Mbps，但是magicalane单链接只能到大约8kb&#x2F;s。 首先quic这个协议本身的性能确实不如tcp，所以没能打满带宽也算是意料之中。但是差的有点大阿。 首先怀疑的是quinn-quic实现问题，看过一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用rust写一个基于QUIC的proxy[1]">
+<meta property="og:url" content="http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/index.html">
+<meta property="og:site_name" content="magicalne">
+<meta property="og:description" content="magicalane最新版本v0.1.0已经支持socksv5，实测下来效果还不错呢。 当第一次开始测试时，发现不能打满带宽，这让我对quic产生了怀疑。腾讯云lighthouse带宽是30Mbps，但是magicalane单链接只能到大约8kb&#x2F;s。 首先quic这个协议本身的性能确实不如tcp，所以没能打满带宽也算是意料之中。但是差的有点大阿。 首先怀疑的是quinn-quic实现问题，看过一">
+<meta property="article:published_time" content="2021-06-08T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-06-09T06:16:10.416Z">
+<meta property="article:author" content="magicalne">
+<meta property="article:tag" content="rust">
+<meta property="article:tag" content="proxy">
+<meta property="article:tag" content="tokio">
+<meta property="article:tag" content="future">
+<meta name="twitter:card" content="summary">
+    
+    
+        
+          
+              <link rel="shortcut icon" href="/images/favicon.ico">
+          
+        
+        
+          
+            <link rel="icon" type="image/png" href="/images/favicon-192x192.png" sizes="192x192">
+          
+        
+        
+          
+            <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+          
+        
+    
+    <!-- title -->
+    <title>使用rust写一个基于QUIC的proxy[1]</title>
+    <!-- styles -->
+    
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+    
+<link rel="stylesheet" href="/lib/meslo-LG/styles.css">
+
+    
+<link rel="stylesheet" href="/lib/justified-gallery/justifiedGallery.min.css">
+
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    <!-- rss -->
+    
+    
+    <!-- jquery -->
+    
+<script src="/lib/jquery/jquery.min.js"></script>
+
+<meta name="generator" content="Hexo 4.2.1"></head>
+
+<body>
+    <div class="banner">
+<div id="blogtitel" class="blogtitel">magicalne</div>
+<ul id="wrapper" class="wrapper">
+  <div class="sun">
+    <div class="star"></div>
+  </div>
+  <div class="mercury">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="venus">
+    <div class="planet">
+      <div class="shadow"></div>
+    </div>
+  </div>
+  <div class="earth">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="mars">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+  <div class="jupiter">
+    <div class="planet"><div class="shadow"></div></div>
+  </div>
+</ul>
+</div>
+
+    <div class="background">
+      
+        <div id="header-post">
+  <a id="menu-icon" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="menu-icon-tablet" href="#"><i class="fa fa-bars fa-lg"></i></a>
+  <a id="top-icon-tablet" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');" style="display:none;"><i class="fa fa-chevron-up fa-lg"></i></a>
+  <span id="menu">
+    <span id="nav">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </span>
+    <br/>
+    <span id="actions">
+      <ul>
+        
+        
+        <li><a class="icon" href="/2021/02/08/2021-02-08-iouring-first-glance/"><i class="fa fa-chevron-right" aria-hidden="true" onmouseover='$("#i-next").toggle();' onmouseout='$("#i-next").toggle();'></i></a></li>
+        
+        <li><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up" aria-hidden="true" onmouseover='$("#i-top").toggle();' onmouseout='$("#i-top").toggle();'></i></a></li>
+        <li><a class="icon" href="#"><i class="fa fa-share-alt" aria-hidden="true" onmouseover='$("#i-share").toggle();' onmouseout='$("#i-share").toggle();' onclick='$("#share").toggle();return false;'></i></a></li>
+      </ul>
+      <span id="i-prev" class="info" style="display:none;">Previous post</span>
+      <span id="i-next" class="info" style="display:none;">Next post</span>
+      <span id="i-top" class="info" style="display:none;">Back to top</span>
+      <span id="i-share" class="info" style="display:none;">Share post</span>
+    </span>
+    <br/>
+    <div id="share" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/" target="_blank" rel="noopener"><i class="fa fa-facebook " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&text=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-twitter " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-linkedin " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&is_video=false&description=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-pinterest " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用rust写一个基于QUIC的proxy[1]&body=Check out this article: http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/"><i class="fa fa-envelope " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-get-pocket " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-reddit " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-stumbleupon " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-digg " aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&name=使用rust写一个基于QUIC的proxy[1]&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr " aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+    <div id="toc">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#手写的未来"><span class="toc-number">1.</span> <span class="toc-text">手写的未来</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#pin"><span class="toc-number">2.</span> <span class="toc-text">pin</span></a></li></ol>
+    </div>
+  </span>
+</div>
+
+      
+      <div class="content index width mx-auto px2 my4">
+          
+          <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+  <header>
+    
+    <h1 class="posttitle" itemprop="name headline">
+        使用rust写一个基于QUIC的proxy[1]
+    </h1>
+
+
+
+    <div class="meta">
+      <span class="author" itemprop="author" itemscope itemtype="http://schema.org/Person">
+        <span itemprop="name">magicalne</span>
+      </span>
+      
+    <div class="postdate">
+        <time datetime="2021-06-08T16:00:00.000Z" itemprop="datePublished">2021-06-09</time>
+    </div>
+
+
+      
+    <div class="article-tag">
+        <i class="fa fa-tag"></i>
+        <a class="tag-link" href="/tags/future/" rel="tag">future</a>, <a class="tag-link" href="/tags/proxy/" rel="tag">proxy</a>, <a class="tag-link" href="/tags/rust/" rel="tag">rust</a>, <a class="tag-link" href="/tags/tokio/" rel="tag">tokio</a>
+    </div>
+
+
+    </div>
+  </header>
+  
+
+  <div class="content" itemprop="articleBody">
+    <p><a href="https://github.com/magicalne/magicalane" target="_blank" rel="noopener">magicalane</a>最新版本v0.1.0已经支持socksv5，实测下来效果还不错呢。</p>
+<p>当第一次开始测试时，发现不能打满带宽，这让我对quic产生了怀疑。腾讯云lighthouse带宽是30Mbps，但是magicalane单链接只能到大约8kb/s。</p>
+<p>首先quic这个协议本身的<a href="https://github.com/quicwg/base-drafts/wiki/21st-Implementation-Draft#perf-features-tested" target="_blank" rel="noopener">性能</a>确实不如tcp，所以没能打满带宽也算是意料之中。但是差的有点大阿。</p>
+<p>首先怀疑的是quinn-quic实现问题，看过一陀一陀的代码也没有发现问题。回头又一想，这个<strong>8kb</strong>怎么这么眼熟呢。然后看到自己代码里把proxy的buffer size设定为8kb了。</p>
+<p>原来瓶颈是我的hardcode0.0</p>
+<p>我能接触到的服务器中，能给出的最大带宽也就30Mpbs。所以我就依照这个30Mpbs，然后改为30 <em> 128 </em> 1024 = 3932160，然后就起飞了。</p>
+<p>单链接看youtube 8K视频没问题，就是自己的浏览器有点卡，网络是不卡的。带宽基本打满了，cpu和内存使用率也很低。</p>
+<p>联想到v2ray，是不是也有buffer size的参数可以配置？一顿搜索之后，果不其然，配置里也有一个bufferSize。所以继续测试了相同buffer size的v2ray的效果。结果是v2ray效果更好。</p>
+<p>当然最后这点带宽不是很重要了，使用quic最重要的原因是想解决head of line blocking。接下来会新增一个tcp+tls的proxy实现，这样才能更好的对比性能。</p>
+<p>同时再考虑如何综合quic和tcp的优势。比如当网络不稳定，出现了～10%丢包，这时候切换成quic；当网络稳定了，再切回tcp。</p>
+<h1 id="手写的未来"><a href="#手写的未来" class="headerlink" title="手写的未来"></a>手写的<strong>未来</strong></h1><p>手写Future真的很难。<a href="https://github.com/magicalne/socks5lib/blob/main/src/proxy.rs" target="_blank" rel="noopener">proxy</a>的实现直接port了<a href="https://github.com/linkerd/linkerd2-proxy/blob/main/linkerd/duplex/src/lib.rs" target="_blank" rel="noopener">linkerd2-proxy</a>。</p>
+<p>手写Future所带来最大的好处就是充分使用范型，可以写抽象的代码。虽然有async-trait这种crate，bin用用可以的，但是lib还是乖乖手写吧。因为lib在设计时候可以在最后阶段交付一个非常generic的Future，还是非常人体工学的。</p>
+<p>手写Future的时候，需要反复利用Context wake task的机制。因为在Future实现中，通常会多次调用poll_like方法，而poll_like方法需要传入cx。这时候，如果有多个poll_like方法返回pending，当某一个方法能够产生progress时，只有最近调用的Future会被调用。</p>
+<p>也就是说，向poll_like方法传入cx，只是<strong>订阅</strong>了一个<code>topic</code>，当能够产生progress时，这个<code>topic</code>不会直接触发回调机制。Future只能通过循环状态机的方式工作。</p>
+<p>所以呢，当某个poll_like方法返回pending，我们能够明确知道，当Future产生新的progress，我们会继续回到这块代码，因为我们之前已经订阅了这个<code>topic</code>。这么说还是挺绕的。简单的状态机很好写，一个enum搞定。复杂的就难了。。。</p>
+<h1 id="pin"><a href="#pin" class="headerlink" title="pin"></a>pin</h1><p>再一个难点就是<code>pin</code>。回想过去学习计算机编成相关的概念，貌似没有哪个概念再比pin复杂了吧？当初第一次接触pin，没有什么特殊感觉，以为自己理解了。不就是把一个struct pin到stack/memory么，这样Future调用的时候，即使被其他的cpu core调用，物理内存地址也不会发生修改，这样就能保证正确性。</p>
+<p>后来又看了看Unpin，!Unpin，Pin&lt;Box<T>&gt;，再加上deref、structural，蒙了。。。</p>
+<p>Pin相关的文档不知道读了多少遍了。对我造成最大困扰的地方就是无法直接查看async fn生成的代码，看编译后的汇编没啥效果。</p>
+<p>最后通过实践，有两个特性尤为重要：</p>
+<ol>
+<li>只有当struct所有成员都是Unpin，那这个struct才是Unpin，这是编译器默认的。否则只能通过实现Unpin trait来确保自己是Unpin，幸运的是，实现Unpin是安全的；</li>
+<li>如果一个T是Unpin，那么Pin&lt;&amp;mut T&gt;与&amp;mut T等价，可以随意deref。</li>
+</ol>
+<p>之所以上述两个特性很重要，是因为Pin的设计之初是为了async生成代码时，会生成自引用代码，所以自引用的成员需要声明为Pin。但是平常手写Future，基本不涉及自引用变量，所以这时候的问题就转变为如何去除Pin。依照上述两个特性，大部分的struct都可以是Unpin的。</p>
+<p>再接下来就是structual project。我用下来，最需要Pin的时候，是当我需要poll一个async fn。也就是类似：</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">MyFut</span></span>&lt;O&gt; &#123;</span><br><span class="line">    inner: Pin&lt;<span class="built_in">Box</span>&lt;<span class="keyword">dyn</span> Future&lt;Output = <span class="built_in">Result</span>&lt;O&gt; + <span class="built_in">Send</span> + <span class="symbol">'static</span>&gt;&gt;&gt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>其他时候可以用pin-project，写起来非常人体工学。当然也可以不用。不用pin-project的好处，就是可以通过deref调用&amp;mut self声明的poll_like方法。</p>
+
+  </div>
+</article>
+
+
+
+      </div>
+      
+       <div id="footer-post-container">
+  <div id="footer-post">
+
+    <div id="nav-footer" style="display: none">
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </div>
+
+    <div id="toc-footer" style="display: none">
+      <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#手写的未来"><span class="toc-number">1.</span> <span class="toc-text">手写的未来</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#pin"><span class="toc-number">2.</span> <span class="toc-text">pin</span></a></li></ol>
+    </div>
+
+    <div id="share-footer" style="display: none">
+      <ul>
+  <li><a class="icon" href="http://www.facebook.com/sharer.php?u=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/" target="_blank" rel="noopener"><i class="fa fa-facebook fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://twitter.com/share?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&text=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-twitter fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.linkedin.com/shareArticle?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-linkedin fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://pinterest.com/pin/create/bookmarklet/?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&is_video=false&description=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-pinterest fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="mailto:?subject=使用rust写一个基于QUIC的proxy[1]&body=Check out this article: http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/"><i class="fa fa-envelope fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="https://getpocket.com/save?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-get-pocket fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://reddit.com/submit?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-reddit fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.stumbleupon.com/submit?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-stumbleupon fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://digg.com/submit?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&title=使用rust写一个基于QUIC的proxy[1]" target="_blank" rel="noopener"><i class="fa fa-digg fa-lg" aria-hidden="true"></i></a></li>
+  <li><a class="icon" href="http://www.tumblr.com/share/link?url=http://github.magicalne.io/2021/06/09/2021-06-09-write-a-quic-based-proxy-with-rust-1/&name=使用rust写一个基于QUIC的proxy[1]&description=" target="_blank" rel="noopener"><i class="fa fa-tumblr fa-lg" aria-hidden="true"></i></a></li>
+</ul>
+
+    </div>
+
+    <div id="actions-footer">
+      <ul>
+        <li id="toc"><a class="icon" href="#" onclick='$("#toc-footer").toggle();return false;'><i class="fa fa-list fa-lg" aria-hidden="true"></i> TOC</a></li>
+        <li id="share"><a class="icon" href="#" onclick='$("#share-footer").toggle();return false;'><i class="fa fa-share-alt fa-lg" aria-hidden="true"></i> Share</a></li>
+        <li id="top" style="display:none"><a class="icon" href="#" onclick="$('html, body').animate({ scrollTop: 0 }, 'fast');"><i class="fa fa-chevron-up fa-lg" aria-hidden="true"></i> Top</a></li>
+        <li id="menu"><a class="icon" href="#" onclick='$("#nav-footer").toggle();return false;'><i class="fa fa-bars fa-lg" aria-hidden="true"></i> Menu</a></li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+      
+      <footer id="footer">
+  <div class="footer-left">
+    Copyright &copy; 2021 magicalne
+  </div>
+  <div class="footer-right">
+    <nav>
+      <ul>
+         
+          <li><a href="/">Home</a></li>
+         
+          <li><a href="/about/">About</a></li>
+         
+          <li><a href="/archives/">Writing</a></li>
+         
+          <li><a href="http://github.com/magicalne" target="_blank" rel="noopener">Projects</a></li>
+        
+      </ul>
+    </nav>
+  </div>
+</footer>
+
+      
+<script src="/lib/justified-gallery/jquery.justifiedGallery.min.js"></script>
+
+
+<script src="/js/main.js"></script>
+
+<!-- Google Analytics -->
+
+<!-- Disqus Comments -->
+
+
+    </div>
+</body>
+</html>
