@@ -177,5 +177,5 @@ services:
     disableInlineCSS: true
   twitter:
     disableInlineCSS: true
-    #googleAnalytics:
-    #ID: G-T2YPC3K8HQ
+  googleAnalytics:
+    ID: G-BBQC3WC3C5
