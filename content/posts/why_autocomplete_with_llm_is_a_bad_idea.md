@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Why Autocomplete with LLM is a Bad Idea?"
-date: 2016-01-10
+date: 2024-09-04
 tags:
 - llm
 categories:
